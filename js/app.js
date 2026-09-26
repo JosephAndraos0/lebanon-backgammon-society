@@ -145,7 +145,7 @@
         '<div class="fill-text">' + ev.taken + " / " + ev.max_players + " seats filled</div></div>" +
       '<div class="card-foot">' +
         '<div class="fee">' + esc(money(ev.entry_fee, ev.currency)) + '<span> entry</span></div>' +
-        '<div style="text-align:right;"><div class="fee">' + esc(money(ev.entry_fee * (ev.paid || 0), ev.currency)) + '</div><div class="fee-sub">prize pool</div></div>' +
+        '<div style="text-align:right;"><div class="fee">' + (totalPrizes(ev) > 0 ? esc(money(totalPrizes(ev), ev.currency)) : "—") + '</div><div class="fee-sub">in prizes</div></div>' +
       "</div></div>";
   }
   document.addEventListener("keydown", function (e) {
@@ -287,10 +287,11 @@
     drawEvent();
   }
 
-  function poolFor(ev, detail) {
-    var paid = detail.players.filter(function (p) { return p.status === "paid"; }).length;
-    return Number(ev.entry_fee) * (ev.status === "open" ? Math.max(paid, 0) : paid);
+  function prizesOf(ev) {
+    var p = ev.prizes || [];
+    return [Number(p[0]) || 0, Number(p[1]) || 0, Number(p[2]) || 0];
   }
+  function totalPrizes(ev) { return prizesOf(ev).reduce(function (a, b) { return a + b; }, 0); }
 
   function drawEvent() {
     var ev = current.event, detail = current.detail;
@@ -299,7 +300,7 @@
     $("edVenue").textContent = ev.venue || "To be announced";
     $("edDate").textContent = fmtDate(ev.starts_at);
     $("edFee").textContent = money(ev.entry_fee, ev.currency);
-    $("edPool").textContent = money(poolFor(ev, detail), ev.currency);
+    $("edPool").textContent = totalPrizes(ev) > 0 ? money(totalPrizes(ev), ev.currency) : "—";
     $("edPlayers").textContent = ev.taken + " / " + ev.max_players;
     document.title = ev.name + " — Lebanon Backgammon Society";
 
@@ -385,16 +386,15 @@
       return;
     }
     if (state.tab === "prizes") {
-      var pool = poolFor(ev, d), split = ev.prize_split || [50, 30, 20];
-      var amt = function (i) { return Math.round(pool * (split[i] || 0) / 100 * 100) / 100; };
+      var prizes = prizesOf(ev);
       var place = function (n) { return d.players.filter(function (p) { return p.final_place === n; })[0]; };
       panel.innerHTML = '<div class="prize-grid">' + [0, 1, 2].map(function (i) {
         var p = place(i + 1);
         return '<div class="prize-card ' + (i === 0 ? "gold" : "") + '">' + trophySvg(["#C6A15B", "#C9BBA3", "#B08A56"][i]) +
-          '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="amt">' + esc(money(amt(i), ev.currency)) + '</div><div class="who">' +
-          (p ? esc(p.name) : split[i] + "% of the pool") + "</div></div>";
+          '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="amt">' + esc(money(prizes[i], ev.currency)) + '</div><div class="who">' +
+          (p ? esc(p.name) : "Up for grabs") + "</div></div>";
       }).join("") + "</div>" +
-      '<p class="fineprint">Prize pool is the entry fees from confirmed players (' + d.players.filter(function (p) { return p.status === "paid"; }).length + " × " + esc(money(ev.entry_fee, ev.currency)) + ").</p>";
+      '<p class="fineprint">Prizes are awarded to the top three finishers of this tournament.</p>';
       return;
     }
     if (state.tab === "players") {
@@ -593,8 +593,8 @@
     return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function openEventForm(ev) {
-    var v = ev || { name: "", slug: "", venue: "", starts_at: new Date(Date.now() + 14 * 864e5).toISOString(), entry_fee: 25, max_players: 16, description: "", status: "draft", prize_split: [50, 30, 20] };
-    var split = v.prize_split || [50, 30, 20];
+    var v = ev || { name: "", slug: "", venue: "", starts_at: new Date(Date.now() + 14 * 864e5).toISOString(), entry_fee: 25, max_players: 16, description: "", status: "draft", prizes: [200, 120, 80] };
+    var pz = prizesOf(v);
     openModal('<div class="modal-head"><h3>' + (ev ? "Edit event" : "New event") + '</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
       '<form id="eventForm" novalidate>' +
       '<div class="field"><label for="fName">Name</label><input id="fName" value="' + esc(v.name) + '" placeholder="Hamra Winter Cup"></div>' +
@@ -604,7 +604,7 @@
       '<div class="field"><label for="fStatus">Status</label><select id="fStatus">' + ["draft", "open", "live", "completed", "cancelled"].map(function (s) { return '<option value="' + s + '"' + (s === v.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></div>" +
       '<div class="field-row"><div class="field"><label for="fFee">Entry fee (USD)</label><input id="fFee" type="number" min="0" step="0.5" value="' + esc(v.entry_fee) + '"></div>' +
       '<div class="field"><label for="fMax">Max players</label><input id="fMax" type="number" min="2" max="128" value="' + esc(v.max_players) + '"></div></div>' +
-      '<div class="field"><label>Prize split % (1st / 2nd / 3rd, must total 100)</label><div class="field-row"><input id="fP1" type="number" min="0" value="' + split[0] + '"><input id="fP2" type="number" min="0" value="' + split[1] + '"><input id="fP3" type="number" min="0" value="' + split[2] + '"></div></div>' +
+      '<div class="field"><label>Prizes in USD (1st / 2nd / 3rd place)</label><div class="field-row"><input id="fP1" type="number" min="0" step="1" aria-label="1st place prize" value="' + pz[0] + '"><input id="fP2" type="number" min="0" step="1" aria-label="2nd place prize" value="' + pz[1] + '"><input id="fP3" type="number" min="0" step="1" aria-label="3rd place prize" value="' + pz[2] + '"></div><small>Fixed amounts paid to the top three finishers.</small></div>' +
       '<div class="field"><label for="fDesc">Description</label><textarea id="fDesc" rows="3">' + esc(v.description) + "</textarea></div>" +
       '<p class="form-error" id="fError" hidden></p>' +
       '<button type="submit" class="btn btn-brass" style="width:100%;">' + (ev ? "Save changes" : "Create event") + "</button></form>");
@@ -617,10 +617,10 @@
       var p = [+$("fP1").value, +$("fP2").value, +$("fP3").value];
       var obj = { name: $("fName").value.trim(), slug: slugify($("fSlug").value || $("fName").value), venue: $("fVenue").value.trim(),
         starts_at: $("fStart").value ? new Date($("fStart").value).toISOString() : null, status: $("fStatus").value,
-        entry_fee: +$("fFee").value, max_players: parseInt($("fMax").value, 10), description: $("fDesc").value.trim(), prize_split: p };
+        entry_fee: +$("fFee").value, max_players: parseInt($("fMax").value, 10), description: $("fDesc").value.trim(), prizes: p };
       var problem = !obj.name ? "Give the event a name." : !obj.slug ? "Give the event a web address." : !obj.starts_at ? "Pick a start date and time."
         : !(obj.entry_fee >= 0) ? "Entry fee must be 0 or more." : !(obj.max_players >= 2 && obj.max_players <= 128) ? "Max players must be between 2 and 128."
-        : (p[0] + p[1] + p[2] !== 100) ? "The prize split must add up to 100." : "";
+        : !(p[0] >= 0 && p[1] >= 0 && p[2] >= 0) ? "Prizes must be 0 or more." : "";
       if (problem) { err.textContent = problem; err.hidden = false; return; }
       try {
         var saved = await API.adminSaveEvent(obj, ev && ev.id);

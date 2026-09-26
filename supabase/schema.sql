@@ -26,7 +26,7 @@ create table public.events (
   description  text not null default '',
   status       text not null default 'draft'
                check (status in ('draft','open','live','completed','cancelled')),
-  prize_split  int[] not null default '{50,30,20}',
+  prizes       numeric(10,2)[] not null default '{0,0,0}',   -- fixed amounts: 1st, 2nd, 3rd place
   created_at   timestamptz not null default now()
 );
 

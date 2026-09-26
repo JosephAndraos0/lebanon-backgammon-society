@@ -60,7 +60,7 @@ Refresh the site: an **Admin** link appears.
    "Mark live" shows a match as in progress on the public bracket.
 6. **Finish event & award points.** Places 1-4 get 100/60/35/25 points, earlier exits 15/8/4 - the Society rankings on the home page update.
 
-Prize pool = entry fees from paid players, split by the percentages you set (default 50/30/20).
+Prizes are fixed dollar amounts you set per event for 1st, 2nd and 3rd place (they're shown on the event page and cards).
 
 ## 5. Put it online on lebanonbackgammonsociety.com
 

@@ -72,8 +72,10 @@
   }
 
   function ev(id, slug, name, venue, iso, fee, max, status, desc, taken) {
+    var pool = fee * taken;   // sample tournaments pay out their entry fees 50 / 30 / 20
     return { id: id, slug: slug, name: name, venue: venue, starts_at: iso, entry_fee: fee, currency: "USD",
-             max_players: max, description: desc, status: status, prize_split: [50, 30, 20], taken: taken, paid: taken };
+             max_players: max, description: desc, status: status,
+             prizes: [Math.round(pool * 0.5), Math.round(pool * 0.3), Math.round(pool * 0.2)], taken: taken, paid: taken };
   }
 
   root.LBS_SAMPLE = {
