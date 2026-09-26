@@ -677,7 +677,7 @@ footer{ padding-bottom:calc(36px + env(safe-area-inset-bottom)); }
 .hero-band{
   background:
     linear-gradient(180deg, rgba(24,15,9,0.80) 0%, rgba(24,15,9,0.88) 50%, rgba(24,15,9,1) 100%),
-    url("img/home-bg.jpg") center center / cover no-repeat;
+    url("img/home-bg.jpg?v=2") center center / cover no-repeat;
   background-color:var(--ink);
 }
 .hero-band .hero{ padding-bottom:88px; }
