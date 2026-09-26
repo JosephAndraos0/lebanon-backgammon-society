@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#180F09">
+<meta name="description" content="Lebanon Backgammon Society — in-person backgammon tournaments across Lebanon. Enter an event, play the bracket, win prizes, and climb the rankings.">
+<meta property="og:title" content="Lebanon Backgammon Society">
+<meta property="og:description" content="In-person backgammon tournaments across Lebanon. Enter, play the bracket, win prizes.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' rx='7' fill='%233A2717'/%3E%3Cpath d='M15 5L23 25H7L15 5Z' fill='%238A2A35'/%3E%3Cpath d='M15 5L21 25H15V5Z' fill='%23C6A15B'/%3E%3C/svg%3E">
+<title>Lebanon Backgammon Society</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="bg-points"></div>
+
+<nav class="topnav">
+  <div class="wrap topnav-inner">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+        <rect width="30" height="30" rx="7" fill="#3A2717"/>
+        <path d="M15 5L23 25H7L15 5Z" fill="#8A2A35" opacity="0.9"/>
+        <path d="M15 5L21 25H15V5Z" fill="#C6A15B"/>
+      </svg>
+      <div class="brand-word"><b>LEBANON BACKGAMMON</b><span>Society · Est. Lebanon</span></div>
+    </div>
+    <div class="navlinks">
+      <button data-nav="home" class="active">Home</button>
+      <button data-nav="events">Events</button>
+      <button data-nav="my">My Events</button>
+      <button data-nav="admin" class="nav-admin" hidden>Admin</button>
+    </div>
+    <div id="navAuthSlot"></div>
+    <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+      <svg id="navToggleIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+  </div>
+  <div class="mobile-menu wrap" id="mobileMenu" hidden>
+    <button data-nav="home" class="active">Home</button>
+    <button data-nav="events">Events</button>
+    <button data-nav="my">My Events</button>
+      <button data-nav="admin" class="nav-admin" hidden>Admin</button>
+  </div>
+</nav>
+
+<div class="banner" id="sampleBanner" hidden>Sample data - connect Supabase in <code>js/config.js</code> to go live (see README.md).</div>
+
+<!-- ===================== HOME ===================== -->
+<div class="view" data-view="home">
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="live-pill" id="liveHeroPill">
+          <span class="dot-live"></span><b>Live now</b><span id="liveHeroText">—</span>
+        </div>
+        <h1>PLAY IN<br>PERSON. <em>RANK UP.</em></h1>
+        <p class="lede">Lebanon's backgammon tournament circuit. Enter an event, pay the buy‑in, show up at the table, and climb the bracket — real games, real venues, real prizes.</p>
+        <div class="hero-cta">
+          <button class="btn btn-brass" data-nav="events">Browse Events</button>
+          <a class="btn btn-ghost" href="#how">How It Works</a>
+        </div>
+        <div class="hero-stats" id="heroStats"></div>
+      </div>
+      <div class="board-art">
+        <svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="400" fill="#2c1c0f"/>
+          <g opacity="0.95">
+            <polygon points="20,20 60,20 40,200" fill="#F1E6D3"/>
+            <polygon points="60,20 100,20 80,200" fill="#8A2A35"/>
+            <polygon points="100,20 140,20 120,200" fill="#F1E6D3"/>
+            <polygon points="140,20 180,20 160,200" fill="#8A2A35"/>
+            <polygon points="180,20 220,20 200,200" fill="#F1E6D3"/>
+            <polygon points="220,20 260,20 240,200" fill="#8A2A35"/>
+            <polygon points="260,20 300,20 280,200" fill="#F1E6D3"/>
+            <polygon points="300,20 340,20 320,200" fill="#8A2A35"/>
+            <polygon points="20,380 60,380 40,200" fill="#8A2A35"/>
+            <polygon points="60,380 100,380 80,200" fill="#F1E6D3"/>
+            <polygon points="100,380 140,380 120,200" fill="#8A2A35"/>
+            <polygon points="140,380 180,380 160,200" fill="#F1E6D3"/>
+            <polygon points="180,380 220,380 200,200" fill="#8A2A35"/>
+            <polygon points="220,380 260,380 240,200" fill="#F1E6D3"/>
+            <polygon points="260,380 300,380 280,200" fill="#8A2A35"/>
+            <polygon points="300,380 340,380 320,200" fill="#F1E6D3"/>
+          </g>
+          <circle cx="40" cy="60" r="14" fill="#C6A15B"/>
+          <circle cx="120" cy="60" r="14" fill="#180F09" stroke="#C6A15B" stroke-width="2"/>
+          <circle cx="40" cy="90" r="14" fill="#C6A15B"/>
+          <circle cx="280" cy="340" r="14" fill="#180F09" stroke="#C6A15B" stroke-width="2"/>
+          <circle cx="320" cy="340" r="14" fill="#C6A15B"/>
+          <circle cx="320" cy="310" r="14" fill="#180F09" stroke="#C6A15B" stroke-width="2"/>
+          <rect x="176" y="176" width="48" height="48" rx="9" fill="#180F09" stroke="#C6A15B" stroke-width="1.5"/>
+          <circle cx="192" cy="192" r="3.2" fill="#F1E6D3"/>
+          <circle cx="208" cy="192" r="3.2" fill="#F1E6D3"/>
+          <circle cx="192" cy="208" r="3.2" fill="#F1E6D3"/>
+          <circle cx="208" cy="208" r="3.2" fill="#F1E6D3"/>
+          <circle cx="200" cy="200" r="3.2" fill="#F1E6D3"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Upcoming &amp; Live</div>
+        <h2>Tournaments this season</h2>
+      </div>
+      <button class="btn btn-ghost btn-sm" data-nav="events">View all events →</button>
+    </div>
+    <div class="grid-events" id="homeEventsGrid"></div>
+  </section>
+
+  <section class="wrap" id="how">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">The Idea</div>
+        <h2>How the Society works</h2>
+        <p class="section-sub">One buy‑in, one bracket, one night at the table. Here's the loop every player runs.</p>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step"><b class="n">01</b><h4>Create your account</h4><p>Sign up with your name — it's how the Society tracks your ranking across every event you enter.</p></div>
+      <div class="step"><b class="n">02</b><h4>Pick an event, pay in</h4><p>Browse open tournaments around Lebanon and lock your seat with a fixed entrance fee, e.g. $25.</p></div>
+      <div class="step"><b class="n">03</b><h4>Show up and play</h4><p>Matches happen in person at the venue. Win your board, advance to the next round of the bracket.</p></div>
+      <div class="step"><b class="n">04</b><h4>Climb, win, repeat</h4><p>Top 3 finishers split the prize pool. Every result also moves you up the Society‑wide rankings.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Season Standings</div>
+        <h2>Society rankings</h2>
+        <p class="section-sub">Points are earned by how deep you run in each bracket — champions score highest, runners‑up next, and so on.</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Rank</th><th>Player</th><th>Events</th><th>Best Result</th><th>Points</th></tr></thead>
+        <tbody id="rankingsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="about-grid">
+      <div>
+        <div class="eyebrow">Why We Built This</div>
+        <h2>Backgammon belongs at the table, not the app.</h2>
+        <p>Lebanon has always played — on balconies, in cafés, between rounds of coffee. The Lebanon Backgammon Society turns that into a real circuit: entrance fees that fund real prize pools, brackets that mean something, and a ranking that follows you from Achrafieh to Byblos.</p>
+        <p>We're not replacing the board with a screen. The app just handles the parts that used to be a headache — who's in, who you're playing, what's at stake — so the table can do the rest.</p>
+      </div>
+      <div class="board-art" style="aspect-ratio:4/3;">
+        <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="300" fill="#231609"/>
+          <circle cx="200" cy="150" r="120" fill="none" stroke="#3A2717" stroke-width="1"/>
+          <circle cx="200" cy="150" r="80" fill="none" stroke="#3A2717" stroke-width="1"/>
+          <g font-family="Anton" fill="#C6A15B" text-anchor="middle">
+            <text x="200" y="130" font-size="34">EST.</text>
+            <text x="200" y="172" font-size="22" fill="#F1E6D3">LEBANON</text>
+          </g>
+          <text x="200" y="205" font-size="11" letter-spacing="3" fill="#9C8B76" text-anchor="middle" font-family="Work Sans">BACKGAMMON SOCIETY</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== EVENTS LIST ===================== -->
+<div class="view" data-view="events" hidden>
+  <section class="wrap" style="padding-top:40px;">
+    <div class="eyebrow">All Tournaments</div>
+    <h2 style="margin-bottom:22px;">Events</h2>
+    <div class="filterbar" id="eventFilterBar">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="live">Live now</button>
+      <button data-filter="open">Open for entry</button>
+      <button data-filter="completed">Completed</button>
+    </div>
+    <div class="grid-events" id="allEventsGrid"></div>
+  </section>
+</div>
+
+<!-- ===================== EVENT DETAIL ===================== -->
+<div class="view" data-view="event" hidden>
+  <div class="wrap">
+    <a class="backlink" data-nav="events" href="#/events">← All events</a>
+    <div class="event-hero">
+      <div>
+        <span id="edBadgeSlot"></span>
+        <h1 id="edTitle"></h1>
+        <div class="event-stats">
+          <div><span>Venue</span><b id="edVenue" class="plain"></b></div>
+          <div><span>Date</span><b id="edDate" class="plain"></b></div>
+          <div><span>Entrance Fee</span><b id="edFee"></b></div>
+          <div><span>Prize Pool</span><b id="edPool"></b></div>
+          <div><span>Seats</span><b id="edPlayers"></b></div>
+        </div>
+      </div>
+      <div id="edCtaBox" class="cta-box"></div>
+    </div>
+    <div class="tabs" id="edTabs">
+      <button data-tab="overview" class="active">Overview</button>
+      <button data-tab="bracket">Bracket</button>
+      <button data-tab="standings">Standings</button>
+      <button data-tab="prizes">Prizes</button>
+      <button data-tab="players">Players</button>
+    </div>
+    <div id="edPanels"></div>
+  </div>
+  <div style="height:60px;"></div>
+</div>
+
+<!-- ===================== MY EVENTS ===================== -->
+<div class="view" data-view="my" hidden>
+  <section class="wrap" style="padding-top:40px;">
+    <div class="eyebrow">Your Account</div>
+    <h2 style="margin-bottom:24px;">My Events</h2>
+    <div id="myContent"></div>
+  </section>
+</div>
+
+<!-- ===================== ADMIN ===================== -->
+<div class="view" data-view="admin" hidden>
+  <section class="wrap" style="padding-top:40px;">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Organizer</div>
+        <h2>Admin dashboard</h2>
+      </div>
+      <button class="btn btn-brass btn-sm" id="adminNewEventBtn">+ New event</button>
+    </div>
+    <div id="adminContent"></div>
+  </section>
+</div>
+
+<div class="view" data-view="adminEvent" hidden>
+  <section class="wrap" style="padding-top:32px;">
+    <a class="backlink" href="#/admin">← All events</a>
+    <div id="adminEventContent"></div>
+  </section>
+  <div style="height:60px;"></div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div style="max-width:280px;">
+        <div class="brand" style="margin-bottom:12px;">
+          <svg width="26" height="26" viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="7" fill="#3A2717"/><path d="M15 5L23 25H7L15 5Z" fill="#8A2A35" opacity="0.9"/><path d="M15 5L21 25H15V5Z" fill="#C6A15B"/></svg>
+          <b style="font-family:'Anton'; font-size:14px;">LEBANON BACKGAMMON SOCIETY</b>
+        </div>
+        <p style="color:var(--muted); font-size:13px;">A tournament circuit for backgammon players across Lebanon — in‑person matches, real stakes, one ranking.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <div class="footer-links">
+          <a data-nav="home">Home</a>
+          <a data-nav="events">Events</a>
+          <a data-nav="my">My Events</a>
+        </div>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <div class="footer-links">
+          <span id="footerEmail">hello@lebanonbackgammonsociety.com</span>
+          <span>Beirut, Lebanon</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Lebanon Backgammon Society</span>
+      <span id="footerNote"></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ===================== AUTH MODAL ===================== -->
+<div class="overlay" id="authOverlay" hidden>
+  <div class="modal">
+    <div class="modal-head"><h3 id="authTitle">Sign in</h3><button class="modal-close" type="button" data-close-auth aria-label="Close">&times;</button></div>
+    <div class="auth-tabs" id="authTabs">
+      <button type="button" data-authtab="signin" class="active">Sign In</button>
+      <button type="button" data-authtab="signup">Create Account</button>
+    </div>
+    <form id="authForm" novalidate>
+      <div class="field" id="authNameField" hidden><label for="authName">Full name</label><input id="authName" autocomplete="name" placeholder="Rami Haddad"></div>
+      <div class="field" id="authEmailField"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+      <div class="field" id="authPassField"><label for="authPass">Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="At least 8 characters"></div>
+      <p class="form-error" id="authError" role="alert" hidden></p>
+      <button type="submit" class="btn btn-brass" style="width:100%; margin-top:4px;" id="authSubmit">Sign In</button>
+    </form>
+    <p class="modal-note" id="authNote"><button type="button" class="linklike" id="forgotBtn">Forgot your password?</button></p>
+  </div>
+</div>
+
+<!-- ===================== ENROLL MODAL ===================== -->
+<div class="overlay" id="enrollOverlay" hidden>
+  <div class="modal">
+    <div id="enrollModalInner"></div>
+  </div>
+</div>
+
+<div class="overlay" id="modalOverlay" hidden>
+  <div class="modal modal-wide"><div id="modalInner"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/bracket.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
