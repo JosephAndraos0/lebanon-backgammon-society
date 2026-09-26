@@ -669,3 +669,21 @@ footer{ padding-bottom:calc(36px + env(safe-area-inset-bottom)); }
   .dot-live{ animation:none; }
   .spinner{ animation:spin 1.6s linear infinite !important; }
 }
+
+/* ===================== homepage photo backdrop =====================
+ * A real photo fixed behind the whole homepage. The dark brown overlay keeps it subtle so the
+ * text, cards and buttons stay readable; the fixed layer means it stays put while the page scrolls,
+ * and cover crops it to fit any phone or desktop screen. */
+.home-bg{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(24,15,9,0.80) 0%, rgba(24,15,9,0.90) 55%, rgba(24,15,9,0.95) 100%),
+    url("img/home-bg.jpg") center center / cover no-repeat;
+  background-color:var(--ink);
+}
+/* the page's own solid background and pattern would otherwise paint over the photo on the homepage */
+body.is-home{ background:transparent; }
+body.is-home .bg-points{ display:none; }
+/* with the board graphic gone, the hero is a single column */
+.hero-grid{ grid-template-columns:1fr; }
+.hero-grid > div{ max-width:640px; }
