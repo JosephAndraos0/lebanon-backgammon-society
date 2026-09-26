@@ -172,7 +172,6 @@
       b.classList.toggle("active", b.getAttribute("data-nav") === navName);
     });
     document.body.classList.remove("has-cta");
-    document.body.classList.toggle("is-home", name === "home");   // lets the homepage photo show behind everything
     setMobileMenu(false);
     updateBanner();
     window.scrollTo(0, 0);
