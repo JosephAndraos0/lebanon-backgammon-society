@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#180F09">
 <meta name="description" content="Lebanon Backgammon Society — in-person backgammon tournaments across Lebanon. Enter an event, play the bracket, win prizes, and climb the rankings.">
 <meta property="og:title" content="Lebanon Backgammon Society">
@@ -33,6 +37,7 @@
       <button data-nav="home" class="active">Home</button>
       <button data-nav="events">Events</button>
       <button data-nav="my">My Events</button>
+      <button data-nav="profile" class="nav-profile" hidden>Profile</button>
       <button data-nav="admin" class="nav-admin" hidden>Admin</button>
     </div>
     <div id="navAuthSlot"></div>
@@ -44,11 +49,14 @@
     <button data-nav="home" class="active">Home</button>
     <button data-nav="events">Events</button>
     <button data-nav="my">My Events</button>
+      <button data-nav="profile" class="nav-profile" hidden>Profile</button>
       <button data-nav="admin" class="nav-admin" hidden>Admin</button>
+    <button type="button" class="nav-signout" id="mobileSignOut" hidden>Sign out</button>
   </div>
 </nav>
 
 <div class="banner" id="sampleBanner" hidden>Sample data - connect Supabase in <code>js/config.js</code> to go live (see README.md).</div>
+<div class="banner banner-action" id="profileBanner" hidden></div>
 
 <!-- ===================== HOME ===================== -->
 <div class="view" data-view="home">
@@ -124,7 +132,7 @@
       </div>
     </div>
     <div class="steps">
-      <div class="step"><b class="n">01</b><h4>Create your account</h4><p>Sign up with your name — it's how the Society tracks your ranking across every event you enter.</p></div>
+      <div class="step"><b class="n">01</b><h4>Create your account</h4><p>Sign up with your name, phone and a photo — so the table knows who you are, and the Society can track your ranking across every event.</p></div>
       <div class="step"><b class="n">02</b><h4>Pick an event, pay in</h4><p>Browse open tournaments around Lebanon and lock your seat with a fixed entrance fee, e.g. $25.</p></div>
       <div class="step"><b class="n">03</b><h4>Show up and play</h4><p>Matches happen in person at the venue. Win your board, advance to the next round of the bracket.</p></div>
       <div class="step"><b class="n">04</b><h4>Climb, win, repeat</h4><p>The top 3 finishers win cash prizes. Every result also moves you up the Society‑wide rankings.</p></div>
@@ -141,7 +149,7 @@
     </div>
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Rank</th><th>Player</th><th>Events</th><th>Best Result</th><th>Points</th></tr></thead>
+        <thead><tr><th>Rank</th><th>Player</th><th class="hide-sm">Events</th><th class="hide-sm">Best Result</th><th>Points</th></tr></thead>
         <tbody id="rankingsBody"></tbody>
       </table>
     </div>
@@ -225,6 +233,20 @@
   </section>
 </div>
 
+<!-- ===================== PROFILE ===================== -->
+<div class="view" data-view="profile" hidden>
+  <section class="wrap narrow" style="padding-top:32px;">
+    <div id="profileContent"></div>
+  </section>
+</div>
+
+<!-- ===================== CLAIM A FRIEND SEAT ===================== -->
+<div class="view" data-view="claim" hidden>
+  <section class="wrap narrow" style="padding-top:40px;">
+    <div id="claimContent"></div>
+  </section>
+</div>
+
 <!-- ===================== ADMIN ===================== -->
 <div class="view" data-view="admin" hidden>
   <section class="wrap" style="padding-top:40px;">
@@ -289,7 +311,7 @@
       <button type="button" data-authtab="signup">Create Account</button>
     </div>
     <form id="authForm" novalidate>
-      <div class="field" id="authNameField" hidden><label for="authName">Full name</label><input id="authName" autocomplete="name" placeholder="Rami Haddad"></div>
+      <div class="field-row" id="authNameField" hidden><div class="field"><label for="authFirst">First name</label><input id="authFirst" autocomplete="given-name" placeholder="Rami"></div><div class="field"><label for="authLast">Last name</label><input id="authLast" autocomplete="family-name" placeholder="Haddad"></div></div>
       <div class="field" id="authEmailField"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
       <div class="field" id="authPassField"><label for="authPass">Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="At least 8 characters"></div>
       <p class="form-error" id="authError" role="alert" hidden></p>
@@ -299,18 +321,12 @@
   </div>
 </div>
 
-<!-- ===================== ENROLL MODAL ===================== -->
-<div class="overlay" id="enrollOverlay" hidden>
-  <div class="modal">
-    <div id="enrollModalInner"></div>
-  </div>
-</div>
-
+<!-- Checkout sheet, payment status, event editor and other dialogs render into this one. -->
 <div class="overlay" id="modalOverlay" hidden>
-  <div class="modal modal-wide"><div id="modalInner"></div></div>
+  <div class="modal modal-wide" role="dialog" aria-modal="true"><div id="modalInner"></div></div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="js/config.js"></script>

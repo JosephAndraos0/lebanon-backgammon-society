@@ -1,0 +1,6 @@
+node_modules/
+package.json
+package-lock.json
+# built by tests/ui/build.js from the real index.html
+ui/index.html
+ui/sample.html

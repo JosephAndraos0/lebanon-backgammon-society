@@ -1,5 +1,5 @@
 /* Data layer. Everything the site reads or writes goes through here.
- * - "live" mode talks to Supabase (auth, database, edge functions).
+ * - "live" mode talks to Supabase (auth, database, storage, edge functions).
  * - "sample" mode (no Supabase keys yet) serves read-only sample tournaments so the
  *   site still looks alive while you set things up. */
 (function (root) {
@@ -12,10 +12,26 @@
 
   var FRIENDLY = {
     not_authenticated: "Please sign in first.",
+    profile_incomplete: "Please finish your profile first (name, phone and photo).",
     event_not_open: "This event isn't open for entry.",
-    event_full: "Sorry, this event is full.",
-    already_enrolled: "You're already enrolled in this event.",
-    cannot_cancel: "This reservation can't be cancelled online. Contact us and we'll help.",
+    event_full: "Sorry - there aren't enough seats left.",
+    already_enrolled: "You already have a seat in this event.",
+    cannot_cancel: "This order can't be cancelled online. Contact us and we'll help.",
+    no_seats: "Choose at least one seat.",
+    too_many_friends: "You can invite up to 8 friends at a time.",
+    friend_email_invalid: "One of the friend email addresses doesn't look right.",
+    friend_is_you: "That's your own email - use the \"Also pay for myself\" box instead.",
+    friend_duplicate: "You entered the same friend email twice.",
+    invite_invalid: "This invite link isn't valid.",
+    invite_claimed: "This seat has already been claimed.",
+    invite_not_ready: "This seat isn't ready yet - the payment hasn't been confirmed.",
+    name_required: "Please enter your first and last name.",
+    name_too_long: "That name is too long.",
+    phone_invalid: "Enter a valid phone number, with country code (e.g. +961 70 123 456).",
+    skill_invalid: "Pick your skill level.",
+    marketing_required: "Please answer the updates question.",
+    photo_required: "Please add a photo so other players know who you are.",
+    avatar_invalid: "That photo couldn't be used. Please try another.",
     need_two_players: "You need at least 2 paid players to build a bracket.",
     downstream_done: "That result can't be changed because the next round has already been played.",
     match_not_ready: "Both players must be known before entering a result.",
@@ -42,6 +58,13 @@
           var r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16);
         });
   }
+  // supabase-js functions.invoke: non-2xx responses come back as an error whose body holds our message.
+  async function fnError(res) {
+    var msg = "";
+    try { var b = await res.error.context.json(); msg = b && b.error; } catch (e) { /* ignore */ }
+    var err = new Error(msg || "Something went wrong. Please try again.");
+    throw err;
+  }
 
   var api = {
     isLive: isLive,
@@ -55,11 +78,12 @@
       if (!isLive) return;
       sb.auth.onAuthStateChange(function (event, session) { cb(event, session); });
     },
-    signUp: async function (name, email, password) {
+    signUp: async function (first, last, email, password) {
       needLive();
       var data = unwrap(await sb.auth.signUp({
         email: email, password: password,
-        options: { data: { full_name: name }, emailRedirectTo: root.location.origin + root.location.pathname }
+        options: { data: { first_name: first, last_name: last, full_name: first + " " + last },
+                   emailRedirectTo: root.location.origin + root.location.pathname }
       }));
       // With email confirmation on, there is no session until the link is clicked.
       return { needsConfirmation: !data.session };
@@ -77,13 +101,25 @@
       needLive();
       unwrap(await sb.auth.updateUser({ password: password }));
     },
+
+    /* ------------------------------ profile ------------------------------ */
     getProfile: async function (userId) {
       needLive();
       return unwrap(await sb.from("profiles").select("*").eq("id", userId).single());
     },
-    updateName: async function (userId, name) {
+    // Photo: already cropped to a square JPEG blob by the page.
+    uploadAvatar: async function (userId, blob) {
       needLive();
-      unwrap(await sb.from("profiles").update({ full_name: name }).eq("id", userId));
+      var path = userId + "/avatar.jpg";
+      unwrap(await sb.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg", cacheControl: "3600" }));
+      return sb.storage.from("avatars").getPublicUrl(path).data.publicUrl + "?v=" + Date.now();
+    },
+    saveProfile: async function (p) {
+      needLive();
+      return unwrap(await sb.rpc("save_profile", {
+        p_first: p.first, p_last: p.last, p_phone: p.phone, p_skill: p.skill,
+        p_marketing: p.marketing, p_avatar_url: p.avatarUrl || null
+      }));
     },
 
     /* ------------------------------ public reads ------------------------------ */
@@ -112,13 +148,15 @@
       ]);
       var enr = unwrap(res[0]), matches = unwrap(res[1]);
       var ids = enr.map(function (e) { return e.user_id; });
-      var names = {};
+      var people = {};
       if (ids.length) {
-        unwrap(await sb.from("public_profiles").select("id, full_name").in("id", ids))
-          .forEach(function (p) { names[p.id] = p.full_name; });
+        unwrap(await sb.from("public_profiles").select("id, full_name, avatar_url").in("id", ids))
+          .forEach(function (p) { people[p.id] = p; });
       }
       var players = enr.map(function (e) {
-        return { user_id: e.user_id, name: names[e.user_id] || "Player", status: e.status, seed: e.seed, final_place: e.final_place };
+        var p = people[e.user_id] || {};
+        return { user_id: e.user_id, name: p.full_name || "Player", avatar_url: p.avatar_url || null,
+                 status: e.status, seed: e.seed, final_place: e.final_place };
       });
       return { players: players, matches: matches };
     },
@@ -127,27 +165,56 @@
       return unwrap(await sb.from("public_rankings").select("*").order("points", { ascending: false }).limit(50));
     },
 
-    /* ------------------------------ enrolling ------------------------------ */
+    /* ------------------------------ enrolling & paying ------------------------------ */
     myEnrollments: async function (userId) {
       if (!isLive) return [];
-      return unwrap(await sb.from("enrollments").select("*").eq("user_id", userId));
+      return unwrap(await sb.from("enrollments").select("*").eq("user_id", userId).neq("status", "cancelled"));
     },
-    enroll: async function (eventId) {
+    myPendingOrders: async function (userId) {
+      if (!isLive) return [];
+      return unwrap(await sb.from("orders").select("*").eq("buyer_id", userId).eq("status", "pending")
+        .gt("hold_expires_at", new Date().toISOString()));
+    },
+    myInvites: async function (userId) {
+      if (!isLive) return [];
+      return unwrap(await sb.from("seat_invites").select("*").eq("inviter_id", userId)
+        .in("status", ["ready", "claimed"]).order("created_at", { ascending: false }));
+    },
+    getOrder: async function (orderId) {
       needLive();
-      return unwrap(await sb.rpc("enroll_in_event", { p_event_id: eventId }));
+      return unwrap(await sb.from("orders").select("*").eq("id", orderId).maybeSingle());
     },
-    cancelEnrollment: async function (eventId) {
+    createOrder: async function (eventId, includeSelf, friends) {
       needLive();
-      unwrap(await sb.rpc("cancel_enrollment", { p_event_id: eventId }));
+      return unwrap(await sb.rpc("create_order", { p_event_id: eventId, p_include_self: includeSelf, p_friends: friends || [] }));
     },
-    startCheckout: async function (eventId) {
+    cancelOrder: async function (orderId) {
+      needLive();
+      unwrap(await sb.rpc("cancel_order", { p_order_id: orderId }));
+    },
+    // -> { url } to redirect to Stripe, or { paid: true } when nothing is left to pay.
+    startCheckout: async function (orderId) {
       needLive();
       var res = await sb.functions.invoke("create-checkout", {
-        body: { event_id: eventId, return_url: root.location.origin + root.location.pathname }
+        body: { order_id: orderId, return_url: root.location.origin + root.location.pathname }
       });
-      if (res.error) fail(res.error);
-      if (!res.data || !res.data.url) throw new Error("Payment couldn't be started. Please try again or contact us.");
-      return res.data.url;
+      if (res.error) await fnError(res);
+      return res.data || {};
+    },
+    sendInvites: async function (orderId, inviteId) {
+      needLive();
+      var res = await sb.functions.invoke("send-invites", { body: { order_id: orderId, invite_id: inviteId || null } });
+      if (res.error) await fnError(res);
+      return res.data || {};
+    },
+    getInvite: async function (token) {
+      needLive();
+      var rows = unwrap(await sb.rpc("get_invite", { p_token: token }));
+      return rows && rows[0] ? rows[0] : null;
+    },
+    claimInvite: async function (token) {
+      needLive();
+      return unwrap(await sb.rpc("claim_invite", { p_token: token }));
     },
 
     /* ------------------------------ admin ------------------------------ */
@@ -166,27 +233,55 @@
     },
     adminEnrollments: async function (eventId) {
       needLive();
-      return unwrap(await sb.from("enrollments").select("*, profiles(full_name, email)")
-        .eq("event_id", eventId).order("created_at", { ascending: true }));
+      return unwrap(await sb.from("enrollments")
+        .select("*, profiles(full_name, email, phone, skill_level, avatar_url)")
+        .eq("event_id", eventId).neq("status", "cancelled").order("created_at", { ascending: true }));
+    },
+    adminInvites: async function (eventId) {
+      needLive();
+      return unwrap(await sb.from("seat_invites")
+        .select("*, inviter:profiles!seat_invites_inviter_id_fkey(full_name), claimer:profiles!seat_invites_claimed_by_fkey(full_name)")
+        .eq("event_id", eventId).neq("status", "cancelled").order("created_at", { ascending: true }));
+    },
+    adminOrders: async function (eventId) {
+      needLive();
+      return unwrap(await sb.from("orders").select("id, buyer_id, seats, amount, currency, status, needs_review, paid_at")
+        .eq("event_id", eventId));
+    },
+    adminReviewOrders: async function (eventId) {
+      needLive();
+      return unwrap(await sb.from("orders").select("*, buyer:profiles(full_name, email)")
+        .eq("event_id", eventId).eq("needs_review", true));
+    },
+    adminMarkOrderPaid: async function (orderId) {
+      needLive();
+      unwrap(await sb.rpc("admin_mark_order_paid", { p_order_id: orderId }));
+    },
+    adminCancelInvite: async function (inviteId) {
+      needLive();
+      unwrap(await sb.rpc("admin_cancel_invite", { p_invite_id: inviteId }));
     },
     adminSetEnrollmentStatus: async function (id, status) {
       needLive();
       unwrap(await sb.from("enrollments").update({
-        status: status, paid_at: status === "paid" ? new Date().toISOString() : null
+        status: status, paid_at: status === "paid" ? new Date().toISOString() : null,
+        hold_expires_at: null
       }).eq("id", id));
     },
 
-    // Seed paid players (best season points first, ties shuffled), build the bracket with
-    // byes, save it and put the event live.
+    // Seed paid players (best season points first, then skill level, ties shuffled), build the
+    // bracket with byes, save it and put the event live.
     adminGenerateBracket: async function (eventId) {
       needLive();
-      var paid = unwrap(await sb.from("enrollments").select("id, user_id")
+      var paid = unwrap(await sb.from("enrollments").select("id, user_id, profiles(skill_level)")
         .eq("event_id", eventId).eq("status", "paid"));
       if (paid.length < 2) fail(new Error("need_two_players"));
       var rk = unwrap(await sb.from("public_rankings").select("user_id, points"));
       var pts = {}; rk.forEach(function (r) { pts[r.user_id] = r.points; });
-      paid.forEach(function (p) { p.tie = Math.random(); });
-      paid.sort(function (a, b) { return (pts[b.user_id] || 0) - (pts[a.user_id] || 0) || a.tie - b.tie; });
+      paid.forEach(function (p) { p.tie = Math.random(); p.skill = (p.profiles && p.profiles.skill_level) || 0; });
+      paid.sort(function (a, b) {
+        return (pts[b.user_id] || 0) - (pts[a.user_id] || 0) || b.skill - a.skill || a.tie - b.tie;
+      });
 
       var matches = B.generate(paid.map(function (p) { return p.user_id; }), uuid)
         .map(function (m) { m.event_id = eventId; return m; });
