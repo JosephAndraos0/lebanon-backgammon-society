@@ -283,7 +283,7 @@
 
     var list = live.concat(open).slice(0, 6);
     $("homeEventsGrid").innerHTML = list.length ? list.map(eventCard).join("")
-      : emptyState("No tournaments yet", "New events are announced here. Check back soon.");
+      : emptyState("No tournaments yet", "New tournaments are announced here. Check back soon.");
 
     $("rankingsBody").innerHTML = ranks.length ? ranks.map(function (r, i) {
       return '<tr><td class="rank-num">#' + (i + 1) + "</td>" +
@@ -291,7 +291,7 @@
         '<td class="num hide-sm">' + r.events_played + "</td>" +
         '<td class="num hide-sm">' + (r.best_place ? "#" + r.best_place : "—") + "</td>" +
         '<td class="num points">' + r.points + "</td></tr>";
-    }).join("") : '<tr><td colspan="5" class="muted-cell">Rankings appear after the first tournament finishes.</td></tr>';
+    }).join("") : '<tr><td colspan="5" class="muted-cell">The leaderboard fills in after the first tournament finishes.</td></tr>';
   }
 
   /* ---------------------------------------------------------------- events list */
@@ -301,7 +301,7 @@
     var events = await loadEvents(true);
     if (stale(token)) return;
     events = events.filter(function (e) { return state.filter === "all" ? e.status !== "draft" || state.isAdmin : e.status === state.filter; });
-    grid.innerHTML = events.length ? events.map(eventCard).join("") : emptyState("No events here", "Try a different filter.");
+    grid.innerHTML = events.length ? events.map(eventCard).join("") : emptyState("No tournaments here", "Try a different filter.");
   }
   $("eventFilterBar").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
@@ -388,8 +388,8 @@
     await Promise.all([loadEvents(true), state.user ? loadMine() : Promise.resolve()]);
     var ev = eventBySlug(slug);
     if (!ev) {
-      $("edTitle").textContent = "Event not found"; $("edBadgeSlot").innerHTML = "";
-      $("edPanels").innerHTML = emptyState("We couldn't find that event", "It may have been removed.", '<button class="btn btn-brass" data-nav="events" style="margin-top:16px;">Browse events</button>');
+      $("edTitle").textContent = "Tournament not found"; $("edBadgeSlot").innerHTML = "";
+      $("edPanels").innerHTML = emptyState("We couldn't find that tournament", "It may have been removed.", '<button class="btn btn-brass" data-nav="events" style="margin-top:16px;">Browse tournaments</button>');
       return;
     }
     var detail = await API.eventDetail(ev.id);
@@ -450,21 +450,21 @@
     } else if (ev.status === "cancelled") {
       html = '<button class="btn btn-ghost" disabled>Cancelled</button>';
     } else if (ev.status === "live") {
-      html = paid ? '<span class="pill pill-ok pill-lg">✓ You\'re enrolled</span>' : '<button class="btn btn-ghost" disabled>Bracket in progress</button>';
+      html = paid ? '<span class="pill pill-ok pill-lg">✓ You\'re in</span>' : '<button class="btn btn-ghost" disabled>Bracket in progress</button>';
     } else if (ev.status !== "open") {
       html = '<button class="btn btn-ghost" disabled>Not open yet</button>';
     } else {
       var parts = [];
       if (paid) {
         var canInvite = !full || held;
-        parts.push('<div class="cta-row"><span class="pill pill-ok pill-lg">✓ You\'re enrolled</span>' +
+        parts.push('<div class="cta-row"><span class="pill pill-ok pill-lg">✓ You\'re in</span>' +
           (canInvite && (paymentsOn(ev) || Number(ev.entry_fee) === 0) ? '<button class="btn btn-ghost" id="edInviteBtn">Invite friends</button>' : "") + "</div>");
       }
       if (held) parts.push(holdHtml(held));
       if (!paid && !held) {
         if (full) parts.push('<button class="btn btn-ghost" disabled>Seats full</button>');
         else if (Number(ev.entry_fee) > 0 && !C.PAYMENTS_ENABLED) parts.push('<button class="btn btn-ghost" disabled>Online payment coming soon</button><p class="cta-note">' + esc(C.PAYMENT_INSTRUCTIONS) + "</p>");
-        else parts.push('<button class="btn btn-brass btn-cta" id="edEnrollBtn">' + (state.user ? "Enroll · " : "Sign in to enroll · ") + esc(Number(ev.entry_fee) > 0 ? fee : "Free") + "</button>");
+        else parts.push('<button class="btn btn-brass btn-cta" id="edEnrollBtn">' + (state.user ? "Join · " : "Sign in to join · ") + esc(Number(ev.entry_fee) > 0 ? fee : "Free") + "</button>");
       }
       html = '<div class="cta-stack">' + parts.join("") + "</div>";
       sticky = !!(held || !paid && !full && (Number(ev.entry_fee) === 0 || C.PAYMENTS_ENABLED));
@@ -495,10 +495,10 @@
     if (state.tab === "overview") {
       var how = ev.status === "open"
         ? '<div class="note-box"><h4>How entry works</h4><p>' + (paymentsOn(ev)
-            ? "Tap Enroll and pay the " + esc(money(ev.entry_fee, ev.currency)) + " entry fee by card. Your seat is confirmed the moment the payment goes through. While you pay, your seat is held for a few minutes; if you don't finish, it's released for someone else. You can also pay for friends: they get an email to claim the seat you paid for."
+            ? "Tap Join and pay the " + esc(money(ev.entry_fee, ev.currency)) + " entry fee by card. Your seat is confirmed the moment the payment clears. While you're paying, we hold your seat for a few minutes; if you don't finish, it goes back up for grabs. You can also cover a friend's seat: they'll get an email with a link to claim it."
             : Number(ev.entry_fee) > 0 ? "Online payment isn't available yet. " + esc(C.PAYMENT_INSTRUCTIONS)
-            : "This event is free. Tap Enroll to take a seat. You can also reserve seats for friends.") +
-          " When entry closes, players are seeded and the bracket is published here. If the field isn't a full power of two, the top seeds get byes.</p></div>" : "";
+            : "This tournament is free to enter. Tap Join to take a seat. You can also reserve a seat for a friend.") +
+          " Once entries close, we seed the field and publish the bracket here. If the numbers don't divide evenly, the top seeds get a bye.</p></div>" : "";
       panel.innerHTML = '<div class="prose"><p>' + esc(ev.description || "Details coming soon.") + "</p>" + how + "</div>";
       return;
     }
@@ -544,7 +544,7 @@
       // Only players with a confirmed (paid) seat are ever listed.
       panel.innerHTML = d.players.length ? '<div class="players-grid">' + d.players.slice().sort(function (a, b) { return (a.seed || 999) - (b.seed || 999); }).map(function (p, i) {
         return '<div class="player-row"><span class="seed num">' + (p.seed || i + 1) + "</span>" + avatar(p.name, p.avatar_url, "avatar-md") + '<span class="pname">' + esc(p.name) + "</span></div>";
-      }).join("") + "</div>" : emptyState("No players yet", "Be the first to enroll.");
+      }).join("") + "</div>" : emptyState("No players yet", "Be the first to join.");
     }
   }
 
@@ -609,24 +609,24 @@
     var avail = ev.max_players - ev.taken + (held ? held.seats : 0);   // a new order replaces our own hold
     var fee = Number(ev.entry_fee) || 0, canSelf = !paid;
     var myEmail = String((state.user && state.user.email) || "").toLowerCase();
-    if (avail < 1) { toast("Sorry, this event is full."); return; }
+    if (avail < 1) { toast("Sorry, this tournament is full."); return; }
     if (fee > 0 && !C.PAYMENTS_ENABLED) { toast("Online payment isn't switched on yet."); return; }
     var order = null, busy = false;
 
     openModal(
-      '<div class="modal-head"><h3>' + (canSelf ? "Enroll in " : "Invite friends to ") + esc(ev.name) + '</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
+      '<div class="modal-head"><h3>' + (canSelf ? "Join " : "Invite friends to ") + esc(ev.name) + '</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
       '<div class="co-event"><span>' + esc(fmtDate(ev.starts_at)) + "</span><span>" + esc(ev.venue || "") + "</span></div>" +
       (canSelf
         ? '<label class="check-row"><input type="checkbox" id="coSelf" checked><span class="check-box" aria-hidden="true"></span><span class="check-text"><b>Also pay for myself</b><small>Your own seat' + (fee > 0 ? " · " + esc(money(fee, ev.currency)) : "") + "</small></span></label>"
-        : '<p class="modal-text">You already have a seat. Pay for friends and we\'ll email each of them a link to claim the seat you paid for.</p>') +
+        : '<p class="modal-text">You\'re already in. Pay for a friend\'s seat and we\'ll email them a link to claim it.</p>') +
       '<div class="co-friends"><div class="co-friends-head"><b>Friends</b><span class="muted" id="coCap"></span></div>' +
       '<div id="coRows"></div>' +
       '<button type="button" class="btn btn-ghost btn-sm" id="coAdd">+ Add a friend</button>' +
       '<small class="co-hint">Each friend gets an email with a one-tap link to claim the seat you paid for. They set up their own free account.</small></div>' +
-      (held ? '<p class="modal-note">This replaces the seats you are currently holding for this event.</p>' : "") +
+      (held ? '<p class="modal-note">This replaces the seats you are currently holding for this tournament.</p>' : "") +
       '<div class="co-total"><span id="coSeats"></span><b id="coTotal"></b></div>' +
       '<p class="form-error" id="coError" role="alert" hidden></p>' +
-      '<p class="modal-note">' + (fee > 0 ? "Seats are held for 35 minutes while you pay on our secure Stripe checkout page. Nothing is confirmed until the payment goes through." : "This event is free.") + "</p>" +
+      '<p class="modal-note">' + (fee > 0 ? "Seats are held for 35 minutes while you pay on our secure Stripe checkout page. Nothing is confirmed until the payment goes through." : "This tournament is free.") + "</p>" +
       '<div class="sheet-actions"><button class="btn btn-brass btn-block" id="coGo"></button></div>',
       { sticky: true });
 
@@ -707,9 +707,9 @@
     var note = "";
     if (friendCount) {
       try { await API.sendInvites(order.id); note = " We've emailed your " + (friendCount === 1 ? "friend" : "friends") + " a link to claim their seat" + (friendCount === 1 ? "" : "s") + "."; }
-      catch (e) { note = " We couldn't send the invite emails. Open My Events to copy or resend each link."; }
+      catch (e) { note = " We couldn't send the invite emails. Open My Tournaments to copy or resend each link."; }
     }
-    doneSheet("ok", self ? "You're in!" : "Seats reserved", esc((self ? "You're enrolled in " + ev.name + ". See you at the table." : "Your friends' seats for " + ev.name + " are reserved.") + note));
+    doneSheet("ok", self ? "You're in!" : "Seats reserved", esc((self ? "You're in for " + ev.name + ". See you at the table." : "Your friends' seats for " + ev.name + " are reserved.") + note));
   }
 
   async function payOrder(order, btn) {
@@ -801,8 +801,8 @@
       }
       var mine = state.myEnrollments.filter(function (e) { return e.order_id === order.id && e.status === "paid"; }).length;
       var friends = order.seats - mine;
-      doneSheet("ok", "Payment confirmed", esc((mine ? "You're enrolled. See you at the table." : "Your seats are paid.") +
-        (friends > 0 ? " We're emailing " + (friends === 1 ? "your friend" : "your " + friends + " friends") + " a link to claim their seat" + (friends === 1 ? "" : "s") + ". You can also share the links from My Events." : "")));
+      doneSheet("ok", "Payment confirmed", esc((mine ? "You're in. See you at the table." : "Your seats are paid.") +
+        (friends > 0 ? " We're emailing " + (friends === 1 ? "your friend" : "your " + friends + " friends") + " a link to claim their seat" + (friends === 1 ? "" : "s") + ". You can also share the links from My Tournaments." : "")));
       return;
     }
     openModal(sheetMessage("warn", "Still waiting for confirmation",
@@ -827,7 +827,7 @@
     try { o = await API.getOrder(p.order); } catch (e) { /* ignore */ }
     if (o && o.status === "paid") { await confirmPayment(p.order); return; }
     if (o && o.status === "pending" && new Date(o.hold_expires_at).getTime() > Date.now()) toast("Payment not completed. Your seats are still held for a few minutes.");
-    else toast("Payment not completed. Your seats were released. You can enroll again.");
+    else toast("Payment not completed. Your seats were released. You can join again.");
   }
 
   /* ---------------------------------------------------------------- profile & onboarding */
@@ -967,7 +967,7 @@
     var res = await Promise.all([API.getInvite(token), loadEvents(true)]);
     if (stale(tk)) return;
     var inv = res[0];
-    var homeBtn = '<button class="btn btn-brass" data-nav="events" style="margin-top:16px;">Browse events</button>';
+    var homeBtn = '<button class="btn btn-brass" data-nav="events" style="margin-top:16px;">Browse tournaments</button>';
     if (!inv || inv.status === "cancelled") {
       box.innerHTML = emptyState(inv ? "This seat was cancelled" : "This link isn't valid", inv ? "The person who invited you or the organizer cancelled this seat." : "Check that you copied the whole link from the email, or ask your friend to send it again.", homeBtn);
       return;
@@ -988,7 +988,7 @@
       return;
     }
     if (inv.event_status !== "open") {
-      box.innerHTML = card + '<p class="modal-text">Entry for this event has closed, so the seat can no longer be claimed. Please contact us at ' + esc(C.CONTACT_EMAIL) + ".</p></div>";
+      box.innerHTML = card + '<p class="modal-text">Entry for this tournament has closed, so the seat can no longer be claimed. Please contact us at ' + esc(C.CONTACT_EMAIL) + ".</p></div>";
       return;
     }
     if (!state.user) {
@@ -1030,7 +1030,7 @@
   async function renderMy(token, silent) {
     var box = $("myContent");
     if (!state.user) {
-      box.innerHTML = emptyState("You're not signed in", "Create an account to enroll in tournaments and track your results.", '<button class="btn btn-brass" id="mySignIn" style="margin-top:16px;">Sign in or create account</button>');
+      box.innerHTML = emptyState("You're not signed in", "Create an account to join tournaments and keep track of your results.", '<button class="btn btn-brass" id="mySignIn" style="margin-top:16px;">Sign in or create account</button>');
       $("mySignIn").onclick = function () { openAuth("signin"); };
       return;
     }
@@ -1050,7 +1050,7 @@
       (API.isLive ? '<button class="btn btn-ghost btn-sm" data-nav="profile">Edit profile</button>' : "") + "</div>";
 
     if (API.isLive && state.profile && !isOnboarded()) {
-      html += '<div class="note-box note-warn"><h4>Finish your profile</h4><p>Add your phone number and a photo to enroll in tournaments.</p><button class="btn btn-brass btn-sm" data-nav="profile" style="margin-top:12px;">Complete profile</button></div>';
+      html += '<div class="note-box note-warn"><h4>Finish your profile</h4><p>Add your phone number and a photo to join tournaments.</p><button class="btn btn-brass btn-sm" data-nav="profile" style="margin-top:12px;">Complete profile</button></div>';
     }
 
     if (holds.length) {
@@ -1066,7 +1066,7 @@
     html += rows.length ? '<div class="grid-events">' + rows.map(function (r) {
       var place = r.enr.final_place ? '<span class="pill">Finished #' + r.enr.final_place + "</span>" : "";
       return '<div class="card-wrap">' + eventCard(r.ev) + '<div class="card-status"><span class="pill pill-ok">Confirmed</span>' + place + "</div></div>";
-    }).join("") + "</div>" : emptyState("No events yet", "Browse the calendar and enroll in your first tournament.", '<button class="btn btn-brass" data-nav="events" style="margin-top:16px;">Browse events</button>');
+    }).join("") + "</div>" : emptyState("No tournaments yet", "Browse the calendar and join your first tournament.", '<button class="btn btn-brass" data-nav="events" style="margin-top:16px;">Browse tournaments</button>');
 
     if (invites.length) {
       html += '<h3 class="my-h">Friends you\'ve paid for</h3><div class="my-list">' + invites.map(function (i) {
@@ -1224,11 +1224,11 @@
     loading(box);
     var events = await loadEvents(true);
     if (stale(token)) return;
-    box.innerHTML = events.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Event</th><th class="hide-sm">Date</th><th>Status</th><th>Seats</th><th></th></tr></thead><tbody>' +
+    box.innerHTML = events.length ? '<div class="table-wrap"><table class="table"><thead><tr><th>Tournament</th><th class="hide-sm">Date</th><th>Status</th><th>Seats</th><th></th></tr></thead><tbody>' +
       events.map(function (e) {
         return "<tr><td><b>" + esc(e.name) + '</b><div class="sub">' + esc(e.venue) + '</div></td><td class="hide-sm">' + esc(fmtDate(e.starts_at)) + "</td><td>" + statusBadge(e.status) + '</td><td class="num">' + e.taken + " / " + e.max_players +
           '</td><td style="text-align:right;"><a class="btn btn-ghost btn-sm" href="#/admin/' + esc(e.slug) + '">Manage</a></td></tr>';
-      }).join("") + "</tbody></table></div>" : emptyState("No events yet", "Create your first tournament.");
+      }).join("") + "</tbody></table></div>" : emptyState("No tournaments yet", "Create your first one.");
   }
   $("adminNewEventBtn").addEventListener("click", function () { openEventForm(null); });
 
@@ -1239,7 +1239,7 @@
   function openEventForm(ev) {
     var v = ev || { name: "", slug: "", venue: "", starts_at: new Date(Date.now() + 14 * 864e5).toISOString(), entry_fee: 25, max_players: 16, description: "", status: "draft", prizes: [200, 120, 80] };
     var pz = prizesOf(v);
-    openModal('<div class="modal-head"><h3>' + (ev ? "Edit event" : "New event") + '</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
+    openModal('<div class="modal-head"><h3>' + (ev ? "Edit tournament" : "New tournament") + '</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
       '<form id="eventForm" novalidate>' +
       '<div class="field"><label for="fName">Name</label><input id="fName" value="' + esc(v.name) + '" placeholder="Hamra Winter Cup"></div>' +
       '<div class="field"><label for="fSlug">Web address</label><input id="fSlug" value="' + esc(v.slug) + '" placeholder="hamra-winter-cup" autocapitalize="off"><small>lebanonbackgammonsociety.com/#/event/<span id="fSlugPreview">' + esc(v.slug) + "</span></small></div>" +
@@ -1251,7 +1251,7 @@
       '<div class="field"><label>Prizes in USD (1st / 2nd / 3rd place)</label><div class="field-row"><input id="fP1" type="number" inputmode="numeric" min="0" step="1" aria-label="1st place prize" value="' + pz[0] + '"><input id="fP2" type="number" inputmode="numeric" min="0" step="1" aria-label="2nd place prize" value="' + pz[1] + '"><input id="fP3" type="number" inputmode="numeric" min="0" step="1" aria-label="3rd place prize" value="' + pz[2] + '"></div><small>Fixed amounts paid to the top three finishers.</small></div>' +
       '<div class="field"><label for="fDesc">Description</label><textarea id="fDesc" rows="3">' + esc(v.description) + "</textarea></div>" +
       '<p class="form-error" id="fError" hidden></p>' +
-      '<div class="sheet-actions"><button type="submit" class="btn btn-brass btn-block">' + (ev ? "Save changes" : "Create event") + "</button></div></form>", { sticky: true });
+      '<div class="sheet-actions"><button type="submit" class="btn btn-brass btn-block">' + (ev ? "Save changes" : "Create tournament") + "</button></div></form>", { sticky: true });
     var slugTouched = !!ev;
     $("fName").addEventListener("input", function () { if (!slugTouched) { $("fSlug").value = slugify($("fName").value); $("fSlugPreview").textContent = $("fSlug").value; } });
     $("fSlug").addEventListener("input", function () { slugTouched = true; $("fSlugPreview").textContent = slugify($("fSlug").value); });
@@ -1262,7 +1262,7 @@
       var obj = { name: $("fName").value.trim(), slug: slugify($("fSlug").value || $("fName").value), venue: $("fVenue").value.trim(),
         starts_at: $("fStart").value ? new Date($("fStart").value).toISOString() : null, status: $("fStatus").value,
         entry_fee: +$("fFee").value, max_players: parseInt($("fMax").value, 10), description: $("fDesc").value.trim(), prizes: p };
-      var problem = !obj.name ? "Give the event a name." : !obj.slug ? "Give the event a web address." : !obj.starts_at ? "Pick a start date and time."
+      var problem = !obj.name ? "Give the tournament a name." : !obj.slug ? "Give the tournament a web address." : !obj.starts_at ? "Pick a start date and time."
         : !(obj.entry_fee >= 0) ? "Entry fee must be 0 or more." : !(obj.max_players >= 2 && obj.max_players <= 128) ? "Max players must be between 2 and 128."
         : !(p[0] >= 0 && p[1] >= 0 && p[2] >= 0) ? "Prizes must be 0 or more." : "";
       if (problem) { err.textContent = problem; err.hidden = false; return; }
@@ -1270,7 +1270,7 @@
         var saved = await API.adminSaveEvent(obj, ev && ev.id);
         closeModal(); await loadEvents(true); toast("Saved.");
         if (ev && parseRoute().name === "adminEvent") { go("admin/" + saved.slug); } else go("admin/" + saved.slug);
-      } catch (ex) { err.textContent = /duplicate key/.test(errMsg(ex)) ? "That web address is already used by another event." : errMsg(ex); err.hidden = false; }
+      } catch (ex) { err.textContent = /duplicate key/.test(errMsg(ex)) ? "That web address is already used by another tournament." : errMsg(ex); err.hidden = false; }
     });
   }
 
@@ -1291,7 +1291,7 @@
     loading(box);
     var events = await loadEvents(true);
     var ev = events.filter(function (e) { return e.slug === slug; })[0];
-    if (!ev) { box.innerHTML = emptyState("Event not found", ""); return; }
+    if (!ev) { box.innerHTML = emptyState("Tournament not found", ""); return; }
     await loadAdminCtx(ev);
     if (stale(token)) return;
     drawAdminEvent();
@@ -1391,7 +1391,7 @@
       '<div class="admin-actions">' + actions + "</div></div>" +
       '<div class="admin-stats"><div><b>' + paid + "</b><span>paid</span></div><div><b>" + held + "</b><span>paying now</span></div><div><b>" + waiting + "</b><span>friend seats waiting</span></div><div><b>" + ev.max_players + "</b><span>max seats</span></div><div><b>" + esc(money(collected, ev.currency)) + "</b><span>collected</span></div></div>" +
       (review.length ? '<div class="note-box note-warn"><h4>Payments that need your attention</h4><p>These were paid after the seats had already been taken. Refund them in Stripe or make room, and contact the buyer.</p><div class="admin-list" style="margin-top:12px;">' + reviewRows + "</div></div>" : "") +
-      '<h3 class="admin-h">Players</h3>' + (enrRows ? '<div class="admin-list">' + enrRows + "</div>" : '<p class="muted-cell">Nobody has enrolled yet.</p>') +
+      '<h3 class="admin-h">Players</h3>' + (enrRows ? '<div class="admin-list">' + enrRows + "</div>" : '<p class="muted-cell">Nobody\'s registered yet.</p>') +
       '<h3 class="admin-h">Friend seats</h3>' + (adminCtx.invitesError ? '<p class="form-error">Couldn\'t load friend seats: ' + esc(adminCtx.invitesError) + "</p>" : inviteRows ? '<div class="admin-list">' + inviteRows + "</div>" : '<p class="muted-cell">Nobody has paid for a friend yet.</p>') +
       bracketHtmlAdmin;
   }
@@ -1416,16 +1416,16 @@
         return adminDo(function () { return API.adminGenerateBracket(ev.id); }, "Bracket published.");
       }
       if (a === "reset") { if (!confirm("Delete the bracket and all results, and reopen entry?")) return; return adminDo(function () { return API.adminResetBracket(ev.id); }, "Bracket reset."); }
-      if (a === "finish") { if (!confirm("Finish the event and award ranking points?")) return; return adminDo(function () { return API.adminFinishEvent(ev.id, adminCtx.matches); }, "Event finished. Rankings updated."); }
+      if (a === "finish") { if (!confirm("Finish the tournament and award leaderboard points?")) return; return adminDo(function () { return API.adminFinishEvent(ev.id, adminCtx.matches); }, "Tournament finished. Leaderboard updated."); }
       if (a === "delete") {
-        if (!confirm("Permanently delete " + ev.name + " and all its enrollments and results?")) return;
+        if (!confirm("Permanently delete " + ev.name + "? This also deletes everyone's sign-ups and results.")) return;
         return API.adminDeleteEvent(ev.id).then(function () { toast("Deleted."); return loadEvents(true); }).then(function () { go("admin"); }).catch(function (x) { toast(errMsg(x)); });
       }
     }
     var enrBtn = e.target.closest("[data-enr]");
     if (enrBtn) {
       var to = enrBtn.getAttribute("data-to"), enrId = enrBtn.getAttribute("data-enr"), orderId = enrBtn.getAttribute("data-order");
-      if (to === "cancelled" && !confirm("Remove this player from the event? Refund them first if they paid.")) return;
+      if (to === "cancelled" && !confirm("Remove this player from the tournament? Refund them first if they paid.")) return;
       if (to === "paid" && orderId) {
         var seats = parseInt(enrBtn.getAttribute("data-seats"), 10) || 1;
         if (!confirm("Mark this payment as received?" + (seats > 1 ? "\n\nIt covers " + seats + " seats (theirs and their friends'), so all of them become confirmed." : ""))) return;

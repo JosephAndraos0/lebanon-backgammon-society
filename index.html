@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#180F09">
-<meta name="description" content="Lebanon Backgammon Society: in-person backgammon tournaments across Lebanon. Enter an event, play the bracket, win prizes, and climb the rankings.">
+<meta name="description" content="Lebanon Backgammon Society runs real, in-person backgammon tournaments across the country. Join a tournament, play for the pot, and see where you land on the leaderboard.">
 <meta property="og:title" content="Lebanon Backgammon Society">
-<meta property="og:description" content="In-person backgammon tournaments across Lebanon. Enter, play the bracket, win prizes.">
+<meta property="og:description" content="Real, in-person backgammon tournaments across Lebanon. Join a tournament and play for the pot.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' rx='7' fill='%233A2717'/%3E%3Cpath d='M15 5L23 25H7L15 5Z' fill='%238A2A35'/%3E%3Cpath d='M15 5L21 25H15V5Z' fill='%23C6A15B'/%3E%3C/svg%3E">
 <title>Lebanon Backgammon Society</title>
@@ -35,8 +35,8 @@
     </a>
     <div class="navlinks">
       <button data-nav="home" class="active">Home</button>
-      <button data-nav="events">Events</button>
-      <button data-nav="my">My Events</button>
+      <button data-nav="events">Tournaments</button>
+      <button data-nav="my">My Tournaments</button>
       <button data-nav="profile" class="nav-profile" hidden>Profile</button>
       <button data-nav="admin" class="nav-admin" hidden>Admin</button>
     </div>
@@ -47,8 +47,8 @@
   </div>
   <div class="mobile-menu wrap" id="mobileMenu" hidden>
     <button data-nav="home" class="active">Home</button>
-    <button data-nav="events">Events</button>
-    <button data-nav="my">My Events</button>
+    <button data-nav="events">Tournaments</button>
+    <button data-nav="my">My Tournaments</button>
       <button data-nav="profile" class="nav-profile" hidden>Profile</button>
       <button data-nav="admin" class="nav-admin" hidden>Admin</button>
     <button type="button" class="nav-signout" id="mobileSignOut" hidden>Sign out</button>
@@ -67,10 +67,10 @@
         <div class="live-pill" id="liveHeroPill">
           <span class="dot-live"></span><b>Live now</b><span id="liveHeroText"></span>
         </div>
-        <h1>PLAY IN<br>PERSON. <em>RANK UP.</em></h1>
-        <p class="lede">Lebanon's backgammon tournament circuit. Enter an event, pay the buy‑in, show up at the table, and climb the bracket. Real games, real venues, real prizes.</p>
+        <h1>TAKE YOUR SEAT<br><em>AT THE TABLE.</em></h1>
+        <p class="lede">Real backgammon, played in person, all across Lebanon. Join a tournament, put some money on the table, and find out who's actually the best in the room.</p>
         <div class="hero-cta">
-          <button class="btn btn-brass" data-nav="events">Browse Events</button>
+          <button class="btn btn-brass" data-nav="events">Browse Tournaments</button>
           <a class="btn btn-ghost" href="#how">How It Works</a>
         </div>
         <div class="hero-stats" id="heroStats"></div>
@@ -85,7 +85,7 @@
         <div class="eyebrow">Upcoming &amp; Live</div>
         <h2>Tournaments this season</h2>
       </div>
-      <button class="btn btn-ghost btn-sm" data-nav="events">View all events →</button>
+      <button class="btn btn-ghost btn-sm" data-nav="events">View all tournaments →</button>
     </div>
     <div class="grid-events" id="homeEventsGrid"></div>
   </section>
@@ -95,28 +95,28 @@
       <div>
         <div class="eyebrow">The Idea</div>
         <h2>How the Society works</h2>
-        <p class="section-sub">One buy‑in, one bracket, one night at the table. Here's the loop every player runs.</p>
+        <p class="section-sub">One entry fee, one bracket, one night at the table. That's the whole idea.</p>
       </div>
     </div>
     <div class="steps">
-      <div class="step"><b class="n">01</b><h4>Create your account</h4><p>Sign up with your name, phone and a photo, so the table knows who you are and the Society can track your ranking across every event.</p></div>
-      <div class="step"><b class="n">02</b><h4>Pick an event, pay in</h4><p>Browse open tournaments around Lebanon and lock your seat with a fixed entrance fee, e.g. $25.</p></div>
-      <div class="step"><b class="n">03</b><h4>Show up and play</h4><p>Matches happen in person at the venue. Win your board, advance to the next round of the bracket.</p></div>
-      <div class="step"><b class="n">04</b><h4>Climb, win, repeat</h4><p>The top 3 finishers win cash prizes. Every result also moves you up the Society‑wide rankings.</p></div>
+      <div class="step"><b class="n">01</b><h4>Create your profile</h4><p>Add your name, phone number and a photo. It's how the table knows who you are, and how we keep score for you all season.</p></div>
+      <div class="step"><b class="n">02</b><h4>Pick a tournament, pay in</h4><p>Browse open tournaments around Lebanon and lock in your seat with a flat entry fee, like $25.</p></div>
+      <div class="step"><b class="n">03</b><h4>Show up and play</h4><p>Matches happen in person, at the venue. Win your board, move on to the next round.</p></div>
+      <div class="step"><b class="n">04</b><h4>Win, get paid</h4><p>The top three finishers split real prize money. Every result also counts toward the season leaderboard.</p></div>
     </div>
   </section>
 
   <section class="wrap">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Season Standings</div>
-        <h2>Society rankings</h2>
-        <p class="section-sub">Points are earned by how deep you run in each bracket: champions score highest, runners‑up next, and so on.</p>
+        <div class="eyebrow">Season Leaderboard</div>
+        <h2>Society leaderboard</h2>
+        <p class="section-sub">The deeper you go in the bracket, the more points you earn. Champions score the most, runners‑up close behind, and so on.</p>
       </div>
     </div>
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Rank</th><th>Player</th><th class="hide-sm">Events</th><th class="hide-sm">Best Result</th><th>Points</th></tr></thead>
+        <thead><tr><th>Rank</th><th>Player</th><th class="hide-sm">Tournaments</th><th class="hide-sm">Best Result</th><th>Points</th></tr></thead>
         <tbody id="rankingsBody"></tbody>
       </table>
     </div>
@@ -125,9 +125,9 @@
   <section class="wrap">
     <div class="about-grid">
       <div>
-        <div class="eyebrow">Why We Built This</div>
+        <div class="eyebrow">Why We Started This</div>
         <h2>Backgammon belongs at the table, not the app.</h2>
-        <p>Lebanon has always played: on balconies, in cafés, between rounds of coffee. The Lebanon Backgammon Society turns that into a real circuit, with entrance fees that fund real prize pools, brackets that mean something, and a ranking that follows you from Achrafieh to Byblos.</p>
+        <p>People have always played backgammon here: on balconies, in cafés, between rounds of coffee. We just gave it some structure. Real entry fees, real prize money, a bracket that means something, and a leaderboard that follows you from Achrafieh to Byblos.</p>
         <p>We're not replacing the board with a screen. The app just handles the parts that used to be a headache: who's in, who you're playing, what's at stake. The table does the rest.</p>
       </div>
       <div class="board-art">
@@ -141,7 +141,7 @@
 <div class="view" data-view="events" hidden>
   <section class="wrap" style="padding-top:40px;">
     <div class="eyebrow">All Tournaments</div>
-    <h2 style="margin-bottom:22px;">Events</h2>
+    <h2 style="margin-bottom:22px;">Tournaments</h2>
     <div class="filterbar" id="eventFilterBar">
       <button data-filter="all" class="active">All</button>
       <button data-filter="live">Live now</button>
@@ -155,7 +155,7 @@
 <!-- ===================== EVENT DETAIL ===================== -->
 <div class="view" data-view="event" hidden>
   <div class="wrap">
-    <a class="backlink" data-nav="events" href="#/events">← All events</a>
+    <a class="backlink" data-nav="events" href="#/events">← All tournaments</a>
     <div class="event-hero">
       <div>
         <span id="edBadgeSlot"></span>
@@ -163,7 +163,7 @@
         <div class="event-stats">
           <div><span>Venue</span><b id="edVenue" class="plain"></b></div>
           <div><span>Date</span><b id="edDate" class="plain"></b></div>
-          <div><span>Entrance Fee</span><b id="edFee"></b></div>
+          <div><span>Entry Fee</span><b id="edFee"></b></div>
           <div><span>Prize Pool</span><b id="edPool"></b></div>
           <div><span>Seats</span><b id="edPlayers"></b></div>
         </div>
@@ -186,7 +186,7 @@
 <div class="view" data-view="my" hidden>
   <section class="wrap" style="padding-top:40px;">
     <div class="eyebrow">Your Account</div>
-    <h2 style="margin-bottom:24px;">My Events</h2>
+    <h2 style="margin-bottom:24px;">My Tournaments</h2>
     <div id="myContent"></div>
   </section>
 </div>
@@ -213,7 +213,7 @@
         <div class="eyebrow">Organizer</div>
         <h2>Admin dashboard</h2>
       </div>
-      <button class="btn btn-brass btn-sm" id="adminNewEventBtn">+ New event</button>
+      <button class="btn btn-brass btn-sm" id="adminNewEventBtn">+ New tournament</button>
     </div>
     <div id="adminContent"></div>
   </section>
@@ -221,7 +221,7 @@
 
 <div class="view" data-view="adminEvent" hidden>
   <section class="wrap" style="padding-top:32px;">
-    <a class="backlink" href="#/admin">← All events</a>
+    <a class="backlink" href="#/admin">← All tournaments</a>
     <div id="adminEventContent"></div>
   </section>
   <div style="height:60px;"></div>
@@ -235,14 +235,14 @@
           <svg width="26" height="26" viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="7" fill="#3A2717"/><path d="M15 5L23 25H7L15 5Z" fill="#8A2A35" opacity="0.9"/><path d="M15 5L21 25H15V5Z" fill="#C6A15B"/></svg>
           <b style="font-family:'Lora'; font-weight:700; font-size:14px;">LEBANON BACKGAMMON SOCIETY</b>
         </div>
-        <p style="color:var(--muted); font-size:13px;">A tournament circuit for backgammon players across Lebanon, with in‑person matches, real stakes, and one ranking.</p>
+        <p style="color:var(--muted); font-size:13px;">Real, in-person backgammon tournaments across Lebanon.</p>
       </div>
       <div>
         <h4>Explore</h4>
         <div class="footer-links">
           <a data-nav="home">Home</a>
-          <a data-nav="events">Events</a>
-          <a data-nav="my">My Events</a>
+          <a data-nav="events">Tournaments</a>
+          <a data-nav="my">My Tournaments</a>
         </div>
       </div>
       <div>

@@ -13,18 +13,18 @@
   var FRIENDLY = {
     not_authenticated: "Please sign in first.",
     profile_incomplete: "Please finish your profile first (name, phone and photo).",
-    event_not_open: "This event isn't open for entry.",
-    event_full: "Sorry - there aren't enough seats left.",
-    already_enrolled: "You already have a seat in this event.",
+    event_not_open: "This tournament isn't open for entry.",
+    event_full: "Sorry, there aren't enough seats left.",
+    already_enrolled: "You already have a seat in this tournament.",
     cannot_cancel: "This order can't be cancelled online. Contact us and we'll help.",
     no_seats: "Choose at least one seat.",
     too_many_friends: "You can invite up to 8 friends at a time.",
     friend_email_invalid: "One of the friend email addresses doesn't look right.",
-    friend_is_you: "That's your own email - use the \"Also pay for myself\" box instead.",
+    friend_is_you: "That's your own email. Use the \"Also pay for myself\" box instead.",
     friend_duplicate: "You entered the same friend email twice.",
     invite_invalid: "This invite link isn't valid.",
     invite_claimed: "This seat has already been claimed.",
-    invite_not_ready: "This seat isn't ready yet - the payment hasn't been confirmed.",
+    invite_not_ready: "This seat isn't ready yet. The payment hasn't been confirmed.",
     name_required: "Please enter your first and last name.",
     name_too_long: "That name is too long.",
     phone_invalid: "Enter a valid phone number, with country code (e.g. +961 70 123 456).",
@@ -38,7 +38,7 @@
     invalid_winner: "The winner must be one of the two players.",
     "Invalid login credentials": "That email and password don't match.",
     "User already registered": "An account with this email already exists. Try signing in.",
-    "Email not confirmed": "Please confirm your email first - check your inbox for our message."
+    "Email not confirmed": "Please confirm your email first. Check your inbox for our message."
   };
 
   function fail(e) {
