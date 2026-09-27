@@ -340,9 +340,10 @@ code{ font-family:'JetBrains Mono', monospace; font-size:.92em; background:var(-
 .match.champion{ margin-top:16px; min-height:90px; }
 .match.tbd .slot-name{ font-style:normal; }
 .match.tbd .slot-name.ph{ font-style:italic; }
-.champ-line{ text-align:right; }
+.champ-line{ display:flex; align-items:center; justify-content:flex-end; gap:10px; text-align:right; }
 .champ-line span{ display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
 .champ-line b{ font-family:'Lora'; font-size:19px; color:var(--brass-bright); font-weight:700; }
+.champ-line .avatar, .champion-slot .avatar, .prize-card .avatar{ border:2px solid var(--brass); }
 .prose{ max-width:640px; padding-block:8px; }
 .prose > p{ color:var(--cream-dim); font-size:15px; line-height:1.7; }
 .note-box{ margin-top:24px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; }
@@ -403,7 +404,7 @@ button:focus-visible, a:focus-visible, .card:focus-visible{ outline:2px solid va
 @media (max-width: 520px){
   .cta-stack{ align-items:flex-start; }
   .cta-note{ text-align:left; }
-  .champ-line{ text-align:left; }
+  .champ-line{ text-align:left; justify-content:flex-start; }
 }
 .userchip{ white-space:nowrap; }
 @media (max-width: 420px){ .chip-name{ display:none; } .userchip{ padding-right:10px; gap:7px; } }

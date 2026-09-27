@@ -347,7 +347,7 @@
         var third = r.matches.filter(function (m) { return m.position === 2; })[0];
         var champ = fin && fin.status === "done" ? nameOf(fin.winner) : null;
         body = matchHtml(fin, nameOf, avOf) +
-          '<div class="match champion"><div class="champion-slot">' + trophySvg("#C6A15B") +
+          '<div class="match champion"><div class="champion-slot">' + (champ ? avatar(champ, avOf(fin.winner), "avatar-lg") : trophySvg("#C6A15B")) +
           (champ ? "<b>" + esc(champ) + "</b><span>Champion</span>" : '<b class="ph">TBD</b><span>Champion</span>') + "</div></div>" +
           (third ? matchHtml(third, nameOf, avOf, "Third place") : "");
       } else {
@@ -446,7 +446,7 @@
 
     if (ev.status === "completed") {
       var champ = current.detail.players.filter(function (p) { return p.final_place === 1; })[0];
-      html = champ ? '<div class="champ-line"><span>Champion</span><b>' + esc(champ.name) + "</b></div>" : "";
+      html = champ ? '<div class="champ-line">' + avatar(champ.name, champ.avatar_url, "avatar-md") + '<div><span>Champion</span><b>' + esc(champ.name) + "</b></div></div>" : "";
     } else if (ev.status === "cancelled") {
       html = '<button class="btn btn-ghost" disabled>Cancelled</button>';
     } else if (ev.status === "live") {
@@ -512,7 +512,7 @@
         var byPlace = function (n) { return d.players.filter(function (p) { return p.final_place === n; })[0]; };
         var podium = [[1, "gold", "#C6A15B"], [2, "", "#C9BBA3"], [3, "", "#B08A56"]].map(function (x) {
           var p = byPlace(x[0]);
-          return '<div class="prize-card ' + x[1] + '">' + trophySvg(x[2]) + '<div class="place">' + ["", "1st", "2nd", "3rd"][x[0]] + ' place</div><div class="who big">' + esc(p ? p.name : "—") + "</div></div>";
+          return '<div class="prize-card ' + x[1] + '">' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(x[2])) + '<div class="place">' + ["", "1st", "2nd", "3rd"][x[0]] + ' place</div><div class="who big">' + esc(p ? p.name : "—") + "</div></div>";
         }).join("");
         panel.innerHTML = '<div class="prize-grid">' + podium + "</div>";
         return;
@@ -533,7 +533,7 @@
       var place = function (n) { return d.players.filter(function (p) { return p.final_place === n; })[0]; };
       panel.innerHTML = '<div class="prize-grid">' + [0, 1, 2].map(function (i) {
         var p = place(i + 1);
-        return '<div class="prize-card ' + (i === 0 ? "gold" : "") + '">' + trophySvg(["#C6A15B", "#C9BBA3", "#B08A56"][i]) +
+        return '<div class="prize-card ' + (i === 0 ? "gold" : "") + '">' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(["#C6A15B", "#C9BBA3", "#B08A56"][i])) +
           '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="amt">' + esc(money(prizes[i], ev.currency)) + '</div><div class="who">' +
           (p ? esc(p.name) : "Up for grabs") + "</div></div>";
       }).join("") + "</div>" +
