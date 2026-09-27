@@ -4,7 +4,7 @@
 const fs = require("fs"), path = require("path");
 const root = path.join(__dirname, "..", "..");
 const source = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const relink = (h) => h.replace(/src="js\//g, 'src="../../js/').replace('href="styles.css"', 'href="../../styles.css"');
+const relink = (h) => h.replace(/src="(js|img)\//g, 'src="../../$1/').replace('href="styles.css"', 'href="../../styles.css"');
 
 const fake = relink(source.replace(/<script src="https:\/\/cdn\.jsdelivr\.net[^>]*supabase[^>]*><\/script>/, '<script src="fake-supabase.js"></script>'));
 if (fake.indexOf("fake-supabase.js") === -1) throw new Error("could not swap the Supabase script tag");

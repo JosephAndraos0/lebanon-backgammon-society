@@ -230,7 +230,7 @@
     var b = $("profileBanner");
     var show = API.isLive && state.user && state.profile && !isOnboarded() && state.view !== "profile" && state.view !== "claim";
     b.hidden = !show;
-    if (show) b.innerHTML = '<span>Finish your profile to enroll - add your phone number and a photo.</span> <button type="button" class="linklike" data-nav="profile">Complete profile</button>';
+    if (show) b.innerHTML = '<span>Finish your profile to enroll. Add your phone number and a photo.</span> <button type="button" class="linklike" data-nav="profile">Complete profile</button>';
   }
 
   async function doSignOut() {
@@ -283,7 +283,7 @@
 
     var list = live.concat(open).slice(0, 6);
     $("homeEventsGrid").innerHTML = list.length ? list.map(eventCard).join("")
-      : emptyState("No tournaments yet", "New events are announced here - check back soon.");
+      : emptyState("No tournaments yet", "New events are announced here. Check back soon.");
 
     $("rankingsBody").innerHTML = ranks.length ? ranks.map(function (r, i) {
       return '<tr><td class="rank-num">#' + (i + 1) + "</td>" +
@@ -323,7 +323,7 @@
     if (m.status === "bye") {
       return '<div class="match done bye-match"><div class="match-tag muted-tag">Bye</div>' +
         '<div class="slot winner">' + slotWho(m.winner, nameOf, avOf, "TBD") + '<span class="slot-score">W</span></div>' +
-        '<div class="slot faded"><span class="slot-name">— no opponent —</span></div></div>';
+        '<div class="slot faded"><span class="slot-name">No opponent</span></div></div>';
     }
     if (m.status === "pending") {
       return '<div class="match tbd">' + t +
@@ -417,7 +417,7 @@
     $("edFee").textContent = money(ev.entry_fee, ev.currency);
     $("edPool").textContent = totalPrizes(ev) > 0 ? money(totalPrizes(ev), ev.currency) : "—";
     $("edPlayers").textContent = ev.taken + " / " + ev.max_players;
-    document.title = ev.name + " — Lebanon Backgammon Society";
+    document.title = ev.name + " · Lebanon Backgammon Society";
 
     var hasBracket = detail.matches.length > 0;
     document.querySelectorAll("#edTabs button").forEach(function (b) {
@@ -464,7 +464,7 @@
       if (!paid && !held) {
         if (full) parts.push('<button class="btn btn-ghost" disabled>Seats full</button>');
         else if (Number(ev.entry_fee) > 0 && !C.PAYMENTS_ENABLED) parts.push('<button class="btn btn-ghost" disabled>Online payment coming soon</button><p class="cta-note">' + esc(C.PAYMENT_INSTRUCTIONS) + "</p>");
-        else parts.push('<button class="btn btn-brass btn-cta" id="edEnrollBtn">' + (state.user ? "Enroll — " : "Sign in to enroll — ") + esc(Number(ev.entry_fee) > 0 ? fee : "Free") + "</button>");
+        else parts.push('<button class="btn btn-brass btn-cta" id="edEnrollBtn">' + (state.user ? "Enroll · " : "Sign in to enroll · ") + esc(Number(ev.entry_fee) > 0 ? fee : "Free") + "</button>");
       }
       html = '<div class="cta-stack">' + parts.join("") + "</div>";
       sticky = !!(held || !paid && !full && (Number(ev.entry_fee) === 0 || C.PAYMENTS_ENABLED));
@@ -495,10 +495,10 @@
     if (state.tab === "overview") {
       var how = ev.status === "open"
         ? '<div class="note-box"><h4>How entry works</h4><p>' + (paymentsOn(ev)
-            ? "Tap Enroll and pay the " + esc(money(ev.entry_fee, ev.currency)) + " entry fee by card - your seat is confirmed the moment the payment goes through. While you pay, your seat is held for a few minutes; if you don't finish, it's released for someone else. You can also pay for friends: they get an email to claim the seat you paid for."
+            ? "Tap Enroll and pay the " + esc(money(ev.entry_fee, ev.currency)) + " entry fee by card. Your seat is confirmed the moment the payment goes through. While you pay, your seat is held for a few minutes; if you don't finish, it's released for someone else. You can also pay for friends: they get an email to claim the seat you paid for."
             : Number(ev.entry_fee) > 0 ? "Online payment isn't available yet. " + esc(C.PAYMENT_INSTRUCTIONS)
-            : "This event is free - tap Enroll to take a seat. You can also reserve seats for friends.") +
-          " When entry closes, players are seeded and the bracket is published here — if the field isn't a full power of two, the top seeds get byes.</p></div>" : "";
+            : "This event is free. Tap Enroll to take a seat. You can also reserve seats for friends.") +
+          " When entry closes, players are seeded and the bracket is published here. If the field isn't a full power of two, the top seeds get byes.</p></div>" : "";
       panel.innerHTML = '<div class="prose"><p>' + esc(ev.description || "Details coming soon.") + "</p>" + how + "</div>";
       return;
     }
@@ -590,7 +590,7 @@
     if (!isOnboarded()) {
       setIntent({ t: "enroll", slug: ev.slug });                       // survives a reload while the profile is filled in
       state.afterProfile = function () { state.autoEnroll = ev.slug; go("event/" + ev.slug); };
-      toast("First, finish your profile - it only takes a minute.");
+      toast("First, finish your profile. It only takes a minute.");
       go("profile");
       return;
     }
@@ -609,7 +609,7 @@
     var avail = ev.max_players - ev.taken + (held ? held.seats : 0);   // a new order replaces our own hold
     var fee = Number(ev.entry_fee) || 0, canSelf = !paid;
     var myEmail = String((state.user && state.user.email) || "").toLowerCase();
-    if (avail < 1) { toast("Sorry - this event is full."); return; }
+    if (avail < 1) { toast("Sorry, this event is full."); return; }
     if (fee > 0 && !C.PAYMENTS_ENABLED) { toast("Online payment isn't switched on yet."); return; }
     var order = null, busy = false;
 
@@ -674,7 +674,7 @@
         if (!name && !email) return;                                   // blank rows are ignored
         if (!email) problem = problem || "Add an email address for " + name + ".";
         else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) problem = problem || "\"" + email + "\" doesn't look like an email address.";
-        else if (email === myEmail) problem = problem || "That's your own email - use \"Also pay for myself\" instead.";
+        else if (email === myEmail) problem = problem || "That's your own email. Use \"Also pay for myself\" instead.";
         else if (seen[email]) problem = problem || "You entered " + email + " twice.";
         else { seen[email] = 1; friends.push({ email: email, name: name }); }
       });
@@ -691,12 +691,12 @@
         if (order.status === "paid") { await finishFreeOrder(ev, order, self, friends.length); return; }
         $("coGo").textContent = "Opening secure checkout…";
         var r = await API.startCheckout(order.id);
-        if (r.paid) { await refreshMine(); doneSheet("ok", "Already paid", "This order is already paid - you're all set."); return; }
+        if (r.paid) { await refreshMine(); doneSheet("ok", "Already paid", "This order is already paid. You're all set."); return; }
         if (!/^https:\/\//.test(r.url || "")) throw new Error("We couldn't open the payment page. Please try again.");
         location.href = r.url;
         return;                                                        // leaving the page; button stays disabled
       } catch (e) {
-        fail(errMsg(e) + (order ? " Your seats are still held - try again, or come back to this page." : ""));
+        fail(errMsg(e) + (order ? " Your seats are still held. Try again, or come back to this page." : ""));
         try { await refreshMine(); } catch (x) { /* ignore */ }
       }
       busy = false; refresh();
@@ -707,7 +707,7 @@
     var note = "";
     if (friendCount) {
       try { await API.sendInvites(order.id); note = " We've emailed your " + (friendCount === 1 ? "friend" : "friends") + " a link to claim their seat" + (friendCount === 1 ? "" : "s") + "."; }
-      catch (e) { note = " We couldn't send the invite emails - open My Events to copy or resend each link."; }
+      catch (e) { note = " We couldn't send the invite emails. Open My Events to copy or resend each link."; }
     }
     doneSheet("ok", self ? "You're in!" : "Seats reserved", esc((self ? "You're enrolled in " + ev.name + ". See you at the table." : "Your friends' seats for " + ev.name + " are reserved.") + note));
   }
@@ -796,17 +796,17 @@
     if (order && order.status === "paid") {
       try { await refreshMine(); } catch (e) { /* ignore */ }
       if (order.needs_review) {
-        doneSheet("warn", "Payment received", "Your payment went through, but the seats had already been taken by the time it arrived. We'll contact you shortly to sort it out - you won't lose your money.");
+        doneSheet("warn", "Payment received", "Your payment went through, but the seats had already been taken by the time it arrived. We'll contact you shortly to sort it out. You won't lose your money.");
         return;
       }
       var mine = state.myEnrollments.filter(function (e) { return e.order_id === order.id && e.status === "paid"; }).length;
       var friends = order.seats - mine;
-      doneSheet("ok", "Payment confirmed", esc((mine ? "You're enrolled - see you at the table." : "Your seats are paid.") +
+      doneSheet("ok", "Payment confirmed", esc((mine ? "You're enrolled. See you at the table." : "Your seats are paid.") +
         (friends > 0 ? " We're emailing " + (friends === 1 ? "your friend" : "your " + friends + " friends") + " a link to claim their seat" + (friends === 1 ? "" : "s") + ". You can also share the links from My Events." : "")));
       return;
     }
     openModal(sheetMessage("warn", "Still waiting for confirmation",
-      "We haven't received confirmation from the payment provider yet. Your payment may still be processing - <b>please don't pay again</b>. Your seat appears here as soon as it's confirmed.",
+      "We haven't received confirmation from the payment provider yet. Your payment may still be processing. <b>Please don't pay again.</b> Your seat appears here as soon as it's confirmed.",
       '<button class="btn btn-brass btn-block" id="againBtn">Check again</button><button class="btn-link" id="closeBtn" style="margin-top:12px;">Close</button>'));
     $("againBtn").onclick = function () { confirmPayment(orderId); };
     $("closeBtn").onclick = function () { closeModal(); redraw(true); };
@@ -826,8 +826,8 @@
     var o = null;
     try { o = await API.getOrder(p.order); } catch (e) { /* ignore */ }
     if (o && o.status === "paid") { await confirmPayment(p.order); return; }
-    if (o && o.status === "pending" && new Date(o.hold_expires_at).getTime() > Date.now()) toast("Payment not completed - your seats are still held for a few minutes.");
-    else toast("Payment not completed. Your seats were released - you can enroll again.");
+    if (o && o.status === "pending" && new Date(o.hold_expires_at).getTime() > Date.now()) toast("Payment not completed. Your seats are still held for a few minutes.");
+    else toast("Payment not completed. Your seats were released. You can enroll again.");
   }
 
   /* ---------------------------------------------------------------- profile & onboarding */
@@ -927,7 +927,7 @@
         var next = state.afterProfile; state.afterProfile = null;
         if (next) { clearIntent(); toast("Profile saved."); next(); }
         else if (resumeIntent()) { toast("Profile saved."); }
-        else if (first) { toast("You're all set - pick a tournament."); go("events"); }
+        else if (first) { toast("You're all set. Pick a tournament."); go("events"); }
         else { toast("Profile saved."); btn.disabled = false; btn.textContent = label; }
       } catch (err) { pfError(errMsg(err)); btn.disabled = false; btn.textContent = label; }
     });
@@ -978,7 +978,7 @@
 
     if (inv.status === "claimed") {
       var mine = ev && paidEnrollment(ev.id);
-      box.innerHTML = card + (mine ? '<p class="modal-text">You claimed this seat - you\'re in!</p><button class="btn btn-brass btn-block" data-nav="event/' + esc(inv.event_slug) + '">View the event</button>'
+      box.innerHTML = card + (mine ? '<p class="modal-text">You claimed this seat. You\'re in!</p><button class="btn btn-brass btn-block" data-nav="event/' + esc(inv.event_slug) + '">View the event</button>'
         : '<p class="modal-text">This seat has already been claimed.</p>' + homeBtn) + "</div>";
       return;
     }
@@ -992,7 +992,7 @@
       return;
     }
     if (!state.user) {
-      box.innerHTML = card + '<p class="modal-text">Create your free account to claim it - you\'ll add your name and a photo. There\'s nothing to pay.</p>' +
+      box.innerHTML = card + '<p class="modal-text">Create your free account to claim it. You\'ll add your name and a photo. There\'s nothing to pay.</p>' +
         '<button class="btn btn-brass btn-block" id="claimSignup">Create account &amp; claim my seat</button>' +
         '<button class="btn btn-ghost btn-block" id="claimSignin" style="margin-top:10px;">I already have an account</button></div>';
       $("claimSignup").onclick = function () { setIntent({ t: "claim", token: token }); openAuth("signup"); };
@@ -1054,7 +1054,7 @@
     }
 
     if (holds.length) {
-      html += '<h3 class="my-h">Seats on hold</h3><p class="fineprint" style="margin-top:0;margin-bottom:12px;">Not confirmed yet - pay before the timer runs out or the seats are released.</p><div class="my-list">' + holds.map(function (o) {
+      html += '<h3 class="my-h">Seats on hold</h3><p class="fineprint" style="margin-top:0;margin-bottom:12px;">Not confirmed yet. Pay before the timer runs out or the seats are released.</p><div class="my-list">' + holds.map(function (o) {
         var ev = eventById(o.event_id), left = new Date(o.hold_expires_at).getTime() - Date.now();
         return '<div class="my-item"><div class="mi-main"><b>' + esc(ev.name) + '</b><span class="sub">' + plural(o.seats, "seat") + " · " + esc(money(o.amount, o.currency)) + '</span></div>' +
           '<span class="hold-time num" data-until="' + esc(o.hold_expires_at) + '">' + fmtClock(left) + "</span>" +
@@ -1090,7 +1090,7 @@
     else if (cancel) { cancelHold(state.myOrders.filter(function (o) { return o.id === cancel.getAttribute("data-hold-cancel"); })[0]); }
     else if (copy) {
       var link = inviteLink(copy.getAttribute("data-copy"));
-      try { await copyText(link); toast("Link copied - paste it into a message."); }
+      try { await copyText(link); toast("Link copied. Paste it into a message."); }
       catch (x) { window.prompt("Copy this link and send it to your friend:", link); }
     } else if (resend) {
       resend.disabled = true;
@@ -1152,7 +1152,7 @@
       if (mode === "signin") { await API.signIn(email, pass); closeAuth(); }
       else if (mode === "signup") {
         var r = await API.signUp(first, last, email, pass);
-        if (r.needsConfirmation) { state.awaitingConfirm = true; authMessage("Almost there - we sent a confirmation link to " + email + ". Click it and you'll pick up right where you left off.", true); }
+        if (r.needsConfirmation) { state.awaitingConfirm = true; authMessage("Almost there. We sent a confirmation link to " + email + ". Click it and you'll pick up right where you left off.", true); }
         else { closeAuth(); }
       }
       else if (mode === "forgot") { await API.sendPasswordReset(email); authMessage("If that email has an account, a reset link is on its way.", true); }
@@ -1323,7 +1323,7 @@
     var standings = ms.length ? B.finalStandings(ms) : null;
 
     var actions = "";
-    if (ev.status === "draft") actions += '<button class="btn btn-brass btn-sm" data-act="open">Publish - open for entry</button>';
+    if (ev.status === "draft") actions += '<button class="btn btn-brass btn-sm" data-act="open">Publish · open for entry</button>';
     if (ev.status === "open") {
       actions += '<button class="btn btn-brass btn-sm" data-act="generate">Close entry &amp; build bracket (' + paid + " paid)</button>";
       actions += '<button class="btn btn-ghost btn-sm" data-act="draft">Back to draft</button>';
@@ -1370,7 +1370,7 @@
 
     var bracketHtmlAdmin = "";
     if (ms.length) {
-      bracketHtmlAdmin = '<h3 class="admin-h">Bracket &amp; results</h3><p class="fineprint">Enter the final score of each match - the higher score wins and moves on. Use "Mark live" to show a match as in progress on the public bracket.</p>' +
+      bracketHtmlAdmin = '<h3 class="admin-h">Bracket &amp; results</h3><p class="fineprint">Enter the final score of each match. The higher score wins and moves on. Use "Mark live" to show a match as in progress on the public bracket.</p>' +
         B.toRounds(ms).map(function (r) {
           return '<div class="round-block"><h4>' + esc(r.label) + '</h4><div class="match-admin-grid">' + r.matches.map(function (m) {
             var third = m.round === B.toRounds(ms).length && m.position === 2;
@@ -1416,7 +1416,7 @@
         return adminDo(function () { return API.adminGenerateBracket(ev.id); }, "Bracket published.");
       }
       if (a === "reset") { if (!confirm("Delete the bracket and all results, and reopen entry?")) return; return adminDo(function () { return API.adminResetBracket(ev.id); }, "Bracket reset."); }
-      if (a === "finish") { if (!confirm("Finish the event and award ranking points?")) return; return adminDo(function () { return API.adminFinishEvent(ev.id, adminCtx.matches); }, "Event finished - rankings updated."); }
+      if (a === "finish") { if (!confirm("Finish the event and award ranking points?")) return; return adminDo(function () { return API.adminFinishEvent(ev.id, adminCtx.matches); }, "Event finished. Rankings updated."); }
       if (a === "delete") {
         if (!confirm("Permanently delete " + ev.name + " and all its enrollments and results?")) return;
         return API.adminDeleteEvent(ev.id).then(function () { toast("Deleted."); return loadEvents(true); }).then(function () { go("admin"); }).catch(function (x) { toast(errMsg(x)); });
@@ -1446,7 +1446,7 @@
     }
     var cancelInv = e.target.closest("[data-cancel-invite]");
     if (cancelInv) {
-      if (!confirm("Cancel this friend's seat? It frees the seat - refund the buyer in Stripe if needed.")) return;
+      if (!confirm("Cancel this friend's seat? It frees the seat. Refund the buyer in Stripe if needed.")) return;
       return adminDo(function () { return API.adminCancelInvite(cancelInv.getAttribute("data-cancel-invite")); }, "Seat cancelled.");
     }
     var save = e.target.closest("[data-save]");
@@ -1456,7 +1456,7 @@
       var sa = card.querySelector('[data-side="a"]').value, sb = card.querySelector('[data-side="b"]').value;
       if (sa === "" || sb === "") return toast("Enter both scores.");
       sa = parseInt(sa, 10); sb = parseInt(sb, 10);
-      if (sa === sb) return toast("Scores can't be tied - someone has to win.");
+      if (sa === sb) return toast("Scores can't be tied. Someone has to win.");
       return adminDo(function () {
         return API.adminSaveResult(adminCtx.matches, id, { score_a: sa, score_b: sb, winner: sa > sb ? m.player_a : m.player_b });
       }, "Result saved.");
