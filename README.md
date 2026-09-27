@@ -69,7 +69,7 @@ It's a static site, so any static host works. **Cloudflare Pages** (free) is the
 1. Cloudflare -> Workers & Pages -> Create -> Pages -> **Upload assets**. Drag in this folder (skip `_test` if it exists). Deploy.
 2. In the project: **Custom domains -> Set up** `lebanonbackgammonsociety.com`. Cloudflare will give you two **nameservers**.
 3. In **Porkbun** -> Domain Management -> your domain -> **Authoritative Nameservers**: replace Porkbun's with Cloudflare's two. Wait for it to activate (minutes to a few hours). HTTPS is automatic.
-4. For the `hello@` email: Cloudflare **Email Routing** (free) can forward it to your Gmail, or use Porkbun email hosting.
+4. The contact email shown on the site (footer, claim page) is `CONTACT_EMAIL` in `js/config.js`. It's currently set to `lebanonbackgammonsociety@gmail.com` - a real Gmail inbox, so there's nothing to forward. If you'd rather use a `@lebanonbackgammonsociety.com` address instead, you'll need working email forwarding for it (Cloudflare Email Routing or Porkbun email hosting) before pointing `CONTACT_EMAIL` at it - the domain isn't currently receiving mail.
 
 (Netlify also works: add the domain there, then in Porkbun DNS create an **ALIAS** record `@` -> `apex-loadbalancer.netlify.com` and a **CNAME** `www` -> your `*.netlify.app` address.)
 
