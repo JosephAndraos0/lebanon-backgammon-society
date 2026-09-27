@@ -169,6 +169,30 @@
       if (!isAdmin()) throw err("not_admin");
       db.seat_invites.forEach(function (i) { if (i.id === a.p_invite_id && (i.status === "pending" || i.status === "ready")) i.status = "cancelled"; });
       return null;
+    },
+    // Any already-paid seat waiting on the signed-in player's email, whether or not they ever
+    // clicked the invite link - matches migration 003 (my_pending_invites).
+    my_pending_invites: function () {
+      if (!me()) return [];
+      var myEmail = (prof(me()) || {}).email || "";
+      return db.seat_invites.filter(function (i) { return i.status === "ready" && String(i.email).toLowerCase() === myEmail.toLowerCase(); })
+        .map(function (i) {
+          var ev = evById(i.event_id);
+          return { id: i.id, token: i.token, event_name: ev.name, event_slug: ev.slug, venue: ev.venue, starts_at: ev.starts_at, inviter_name: prof(i.inviter_id).full_name };
+        });
+    },
+    decline_invite: function (a) {
+      if (!me()) throw err("not_authenticated");
+      var myEmail = (prof(me()) || {}).email || "";
+      var i = db.seat_invites.filter(function (x) { return x.id === a.p_invite_id; })[0];
+      if (!i || i.status !== "ready" || String(i.email).toLowerCase() !== myEmail.toLowerCase()) throw err("invite_invalid");
+      i.status = "declined";
+      return null;
+    },
+    admin_mark_invite_refunded: function (a) {
+      if (!isAdmin()) throw err("not_admin");
+      db.seat_invites.forEach(function (i) { if (i.id === a.p_invite_id && i.status === "declined") i.status = "cancelled"; });
+      return null;
     }
   };
 

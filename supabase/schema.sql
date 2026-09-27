@@ -357,7 +357,7 @@ create table if not exists public.seat_invites (
   email       text not null,
   name        text,
   token       text not null unique default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
-  status      text not null default 'pending' check (status in ('pending','ready','claimed','cancelled')),
+  status      text not null default 'pending' check (status in ('pending','ready','claimed','cancelled','declined')),
   claimed_by  uuid references public.profiles(id),
   claimed_at  timestamptz,
   emailed_at  timestamptz,
@@ -531,6 +531,15 @@ begin
   update public.seat_invites set status = 'cancelled' where id = p_invite_id and status in ('pending', 'ready');
 end $$;
 
+-- The organizer confirms they've refunded the buyer for a declined seat in Stripe. Purely a
+-- bookkeeping step - it doesn't touch Stripe or the order itself.
+create or replace function public.admin_mark_invite_refunded(p_invite_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'not_admin'; end if;
+  update public.seat_invites set status = 'cancelled' where id = p_invite_id and status = 'declined';
+end $$;
+
 -- What a friend sees before signing in: which event, who paid for them.
 create or replace function public.get_invite(p_token text)
 returns table (status text, event_name text, event_slug text, venue text, starts_at timestamptz,
@@ -577,6 +586,38 @@ begin
   return r;
 end $$;
 
+-- What a signed-in player sees: any already-paid seat waiting on their email address that they
+-- haven't claimed or turned down yet. Matched by email, not by who was signed in when the order
+-- was paid, so it also catches someone who creates their account after being invited.
+create or replace function public.my_pending_invites()
+returns table (id uuid, token text, event_name text, event_slug text, venue text,
+               starts_at timestamptz, inviter_name text)
+language sql stable security definer set search_path = public as $$
+  select i.id, i.token, ev.name, ev.slug, ev.venue, ev.starts_at, p.full_name
+  from public.seat_invites i
+  join public.events ev on ev.id = i.event_id
+  join public.profiles p on p.id = i.inviter_id
+  where i.status = 'ready'
+    and lower(i.email) = lower((select email from public.profiles where id = auth.uid()))
+  order by i.created_at desc
+$$;
+
+-- The invited player turns down a seat that was already paid for.
+create or replace function public.decline_invite(p_invite_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  i        public.seat_invites;
+  my_email text;
+begin
+  if auth.uid() is null then raise exception 'not_authenticated'; end if;
+  select email into my_email from public.profiles where id = auth.uid();
+  select * into i from public.seat_invites where id = p_invite_id for update;
+  if not found or i.status <> 'ready' or lower(i.email) <> lower(coalesce(my_email, '')) then
+    raise exception 'invite_invalid';
+  end if;
+  update public.seat_invites set status = 'declined' where id = i.id;
+end $$;
+
 -- Old one-step enrolling is replaced by create_order().
 drop function if exists public.enroll_in_event(uuid);
 drop function if exists public.cancel_enrollment(uuid);
@@ -585,13 +626,13 @@ drop function if exists public.cancel_enrollment(uuid);
 revoke execute on function public._mark_order_paid(uuid, text) from public, anon, authenticated;
 revoke execute on function
   public.create_order(uuid, boolean, jsonb), public.cancel_order(uuid), public.claim_invite(text),
-  public.save_profile(text, text, text, int, boolean, text),
-  public.admin_mark_order_paid(uuid), public.admin_cancel_invite(uuid)
+  public.save_profile(text, text, text, int, boolean, text), public.decline_invite(uuid), public.my_pending_invites(),
+  public.admin_mark_order_paid(uuid), public.admin_cancel_invite(uuid), public.admin_mark_invite_refunded(uuid)
   from public, anon;
 grant execute on function
   public.create_order(uuid, boolean, jsonb), public.cancel_order(uuid), public.claim_invite(text),
-  public.save_profile(text, text, text, int, boolean, text),
-  public.admin_mark_order_paid(uuid), public.admin_cancel_invite(uuid)
+  public.save_profile(text, text, text, int, boolean, text), public.decline_invite(uuid), public.my_pending_invites(),
+  public.admin_mark_order_paid(uuid), public.admin_cancel_invite(uuid), public.admin_mark_invite_refunded(uuid)
   to authenticated;
 grant execute on function public.get_invite(text), public.seats_taken(uuid) to anon, authenticated;
 grant select on public.public_profiles, public.public_enrollments, public.event_seats to anon, authenticated;

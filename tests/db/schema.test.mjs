@@ -4,7 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 // The supabase/ folder of this repo (override with LBS_SUPABASE_DIR, ending in a slash, if needed).
 const root = process.env.LBS_SUPABASE_DIR || fileURLToPath(new URL('../../supabase/', import.meta.url));
-const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 ; 'fresh' = schema.sql only
+const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 ; 'fresh' = schema.sql only
 const db = new PGlite();
 
 await db.exec(`
@@ -28,6 +28,7 @@ if (mode === 'migrate') {
   // live DB already had a test row before migrating: keep one to prove data survives
   await db.exec(`insert into auth.users(id,email,raw_user_meta_data) values ('11111111-1111-1111-1111-111111111111','old@x.com','{"full_name":"Old Timer"}');`);
   await db.exec(fs.readFileSync(root + 'migrations/002_profiles_holds_orders_invites.sql', 'utf8'));
+  await db.exec(fs.readFileSync(root + 'migrations/003_decline_invite.sql', 'utf8'));
 } else {
   await db.exec(fs.readFileSync(root + 'schema.sql', 'utf8'));
 }
@@ -178,6 +179,31 @@ await as(p2, 'authenticated', `select cancel_order($1)`, [ob.id]);
 const oc = (await as(p3, 'authenticated', `select * from create_order($1,true,'[]')`, [ev2])).rows[0]; await as(null, 'service_role', `select _mark_order_paid($1,'c')`, [oc.id]);
 await as(null, 'service_role', `select _mark_order_paid($1,'late2')`, [ob.id]);
 ok('late payment with no room is flagged for admin review (not silently lost)', (await val(`select needs_review from orders where id=$1`, [ob.id])).needs_review === true);
+
+// ---- declining a paid invite (friend doesn't want the seat, never visits the claim link)
+const p5 = await newUser('p5@x.com', { first_name: 'Player', last_name: 'Five' });
+await as(p5, 'authenticated', `select save_profile('Player','Five','+96170555555',3,true,$1)`, [av(p5)]);
+const ev3 = (await as(admin, 'authenticated', `insert into events(slug,name,starts_at,status,max_players,entry_fee) values ('c3','C3', now()+interval '7 days','open',5,10) returning id`)).rows[0].id;
+const o6 = (await as(p1, 'authenticated', `select * from create_order($1,true,$2::jsonb)`, [ev3, JSON.stringify([{ email: 'p5@x.com', name: 'Five' }])])).rows[0];
+await as(null, 'service_role', `select _mark_order_paid($1,'cs_decline')`, [o6.id]);
+ok('friend seat ready after payment', (await val(`select status from seat_invites where order_id=$1`, [o6.id])).status === 'ready');
+ok('both seats occupied right after payment', (await seats(ev3)).taken === 2);
+ok('unrelated player sees no pending invites', (await as(p3, 'authenticated', `select count(*)::int c from my_pending_invites()`)).rows[0].c === 0);
+const pend = (await as(p5, 'authenticated', `select * from my_pending_invites()`)).rows;
+ok('invited friend sees the paid seat waiting, matched by email (never visited the link)',
+   pend.length === 1 && pend[0].event_name === 'C3' && pend[0].inviter_name === 'Player One');
+const inv3 = await val(`select id, token from seat_invites where order_id=$1`, [o6.id]);
+await blocked('a stranger cannot decline someone else\'s invite', () => as(p3, 'authenticated', `select decline_invite($1)`, [inv3.id]), 'invite_invalid');
+await blocked('anon cannot decline', () => as(null, 'anon', `select decline_invite($1)`, [inv3.id]));
+await as(p5, 'authenticated', `select decline_invite($1)`, [inv3.id]);
+ok('declining frees the seat immediately (buyer keeps theirs)', (await seats(ev3)).taken === 1);
+ok('invite marked declined, not cancelled (admin still needs to refund it)', (await val(`select status from seat_invites where id=$1`, [inv3.id])).status === 'declined');
+ok('declined invite drops off the friend\'s pending list', (await as(p5, 'authenticated', `select count(*)::int c from my_pending_invites()`)).rows[0].c === 0);
+await blocked('declining twice', () => as(p5, 'authenticated', `select decline_invite($1)`, [inv3.id]), 'invite_invalid');
+await blocked('claiming after declining', () => as(p5, 'authenticated', `select claim_invite($1)`, [inv3.token]), 'invite_not_ready');
+await blocked('non-admin marking a decline refunded', () => as(p1, 'authenticated', `select admin_mark_invite_refunded($1)`, [inv3.id]), 'not_admin');
+await as(admin, 'authenticated', `select admin_mark_invite_refunded($1)`, [inv3.id]);
+ok('admin closes it out once refunded in Stripe', (await val(`select status from seat_invites where id=$1`, [inv3.id])).status === 'cancelled');
 
 // ---- rankings & old behaviour still fine
 await as(admin, 'authenticated', `update enrollments set points=100, final_place=1 where user_id=$1 and event_id=$2`, [p1, ev]);

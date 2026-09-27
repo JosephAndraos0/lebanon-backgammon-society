@@ -11,7 +11,7 @@
     user: null, profile: null, isAdmin: false,
     events: null, myEnrollments: [], myOrders: [],
     filter: "all", tab: "overview", authMode: "signin",
-    awaitingConfirm: false, afterProfile: null, autoEnroll: null,
+    awaitingConfirm: false, afterProfile: null, autoEnroll: null, invitesChecked: false,
     view: null, token: 0, sessSeq: 0, welcomed: null,
     expiring: false, nextExpireCheck: 0
   };
@@ -1024,6 +1024,52 @@
     };
   }
 
+  /* ---------------------------------------------------------------- pending invites
+   * A friend's seat is paid for the moment the buyer's order clears, but nothing ties it to the
+   * friend's account until they claim it. If they just sign in and look around instead of
+   * clicking the emailed link, checked once per session by matching their email address, so
+   * they aren't quietly told to pay again for a seat that's already theirs. */
+  function offerPendingInvites(list) {
+    var i = 0;
+    function next() {
+      if (i >= list.length) return;
+      var inv = list[i];
+      openModal(
+        '<div class="modal-head"><h3>Seat waiting for you</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
+        '<div class="claim-event"><b>' + esc(inv.event_name) + '</b><span>' + esc(fmtDate(inv.starts_at)) + (inv.venue ? " · " + esc(inv.venue) : "") + "</span></div>" +
+        '<p class="modal-text">' + esc(inv.inviter_name) + " already paid for your seat. Want it?</p>" +
+        '<p class="form-error" id="pendInvErr" role="alert" hidden></p>' +
+        '<button class="btn btn-brass btn-block" id="pendInvAccept">Yes, I\'m in</button>' +
+        '<button class="btn btn-ghost btn-block" id="pendInvDecline" style="margin-top:10px;">No thanks</button>'
+      );
+      $("pendInvAccept").onclick = async function () {
+        var btn = $("pendInvAccept"); btn.disabled = true; btn.textContent = "Joining…";
+        try {
+          await API.claimInvite(inv.token);
+          await refreshMine();
+          doneSheet("ok", "You're in!", esc("Your seat for " + inv.event_name + " is confirmed. See you at the table."), function () { i++; next(); });
+        } catch (e) {
+          var b = $("pendInvErr"); b.textContent = errMsg(e); b.hidden = false;
+          btn.disabled = false; btn.textContent = "Yes, I'm in";
+        }
+      };
+      $("pendInvDecline").onclick = function () {
+        if (!confirm("Turn down this seat? " + inv.inviter_name + " will need a refund from the organizer for it, not from you.")) return;
+        var btn = $("pendInvDecline"); btn.disabled = true;
+        API.declineInvite(inv.id).then(function () {
+          closeModal();
+          toast("Declined. " + inv.inviter_name + " will get a refund from the organizer for that seat.");
+          i++; next();
+        }).catch(function (e) { toast(errMsg(e)); btn.disabled = false; });
+      };
+    }
+    next();
+  }
+  function checkPendingInvites() {
+    API.myPendingInvites().then(function (rows) { if (rows && rows.length) offerPendingInvites(rows); })
+      .catch(function () { /* not worth blocking sign-in over */ });
+  }
+
   /* ---------------------------------------------------------------- my events */
   function inviteLink(token) { return location.origin + location.pathname + "#/claim/" + token; }
 
@@ -1071,10 +1117,11 @@
     if (invites.length) {
       html += '<h3 class="my-h">Friends you\'ve paid for</h3><div class="my-list">' + invites.map(function (i) {
         var ev = eventById(i.event_id), who = i.name ? i.name + " · " + i.email : i.email;
-        var claimed = i.status === "claimed";
-        return '<div class="my-item"><div class="mi-main"><b>' + esc(who) + '</b><span class="sub">' + esc(ev ? ev.name : "") + "</span></div>" +
-          (claimed ? '<span class="pill pill-ok">Claimed</span>' : '<span class="pill pill-warn">Waiting to claim</span>') +
-          (claimed ? "" : '<div class="mi-actions">' +
+        var declined = i.status === "declined", claimed = i.status === "claimed";
+        var pill = claimed ? '<span class="pill pill-ok">Claimed</span>' : declined ? '<span class="pill pill-warn">Declined</span>' : '<span class="pill pill-warn">Waiting to claim</span>';
+        return '<div class="my-item"><div class="mi-main"><b>' + esc(who) + '</b><span class="sub">' + esc(ev ? ev.name : "") + "</span>" +
+          (declined ? '<span class="sub">They turned it down - ask the organizer for a refund on this seat.</span>' : "") + "</div>" + pill +
+          (claimed || declined ? "" : '<div class="mi-actions">' +
             '<button class="btn btn-ghost btn-sm" data-copy="' + esc(i.token) + '">Copy link</button>' +
             '<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent("I paid for your seat at " + (ev ? ev.name : "the tournament") + "! Claim it here: " + inviteLink(i.token)) + '">WhatsApp</a>' +
             '<button class="btn btn-ghost btn-sm" data-resend="' + esc(i.id) + '" data-order="' + esc(i.order_id) + '">' + (i.emailed_at ? "Resend email" : "Send email") + "</button></div>") + "</div>";
@@ -1186,7 +1233,7 @@
     if (event === "SIGNED_IN" && session && wasUser === session.user.id) return;
     var seq = ++state.sessSeq;
     state.user = session ? session.user : null;
-    state.profile = null; state.isAdmin = false; state.myEnrollments = []; state.myOrders = [];
+    state.profile = null; state.isAdmin = false; state.myEnrollments = []; state.myOrders = []; state.invitesChecked = false;
     if (state.user) {
       try { state.profile = await API.getProfile(state.user.id); state.isAdmin = !!state.profile.is_admin; } catch (e) { /* profile row may lag a moment after sign-up */ }
       try { await loadMine(); } catch (e) { /* ignore */ }
@@ -1205,6 +1252,7 @@
       go("profile");
       return;
     }
+    if (state.user && isOnboarded() && !state.invitesChecked) { state.invitesChecked = true; checkPendingInvites(); }
     route();
   }
 
@@ -1357,10 +1405,16 @@
     var inviteRows = invites.map(function (i) {
       var who = i.name ? i.name + " · " + i.email : i.email;
       var status = i.status === "claimed" ? '<span class="pill pill-ok">Claimed' + (i.claimer && i.claimer.full_name ? " by " + esc(i.claimer.full_name) : "") + "</span>"
+        : i.status === "declined" ? '<span class="pill pill-warn">Declined - refund owed</span>'
         : i.status === "ready" ? '<span class="pill pill-warn">Waiting to claim</span>' : '<span class="pill">Awaiting payment</span>';
-      return '<div class="admin-row"><div class="ar-main"><b>' + esc(who) + '</b><div class="sub">paid for by ' + esc((i.inviter && i.inviter.full_name) || "—") + (i.status === "ready" ? (i.emailed_at ? " · emailed" : " · not emailed yet") : "") + "</div></div>" +
+      var ord = i.order_id && orderById[i.order_id];
+      var perSeat = ord && ord.seats ? money(Number(ord.amount) / ord.seats, ord.currency) : "";
+      return '<div class="admin-row"><div class="ar-main"><b>' + esc(who) + '</b><div class="sub">paid for by ' + esc((i.inviter && i.inviter.full_name) || "—") +
+          (i.status === "ready" ? (i.emailed_at ? " · emailed" : " · not emailed yet") : "") +
+          (i.status === "declined" && perSeat ? " · refund " + esc(perSeat) + " to the buyer in Stripe" : "") + "</div></div>" +
         '<div class="ar-status">' + status + "</div>" +
-        '<div class="ar-actions">' + (i.status === "ready" ? '<button class="btn btn-ghost btn-sm" data-resend="' + esc(i.id) + '" data-order="' + esc(i.order_id) + '">' + (i.emailed_at ? "Resend" : "Send email") + '</button> <button class="btn btn-ghost btn-sm danger" data-cancel-invite="' + esc(i.id) + '">Cancel seat</button>' : "") + "</div></div>";
+        '<div class="ar-actions">' + (i.status === "ready" ? '<button class="btn btn-ghost btn-sm" data-resend="' + esc(i.id) + '" data-order="' + esc(i.order_id) + '">' + (i.emailed_at ? "Resend" : "Send email") + '</button> <button class="btn btn-ghost btn-sm danger" data-cancel-invite="' + esc(i.id) + '">Cancel seat</button>'
+          : i.status === "declined" ? '<button class="btn btn-brass btn-sm" data-mark-refunded="' + esc(i.id) + '">Mark refunded</button>' : "") + "</div></div>";
     }).join("");
 
     var reviewRows = review.map(function (o) {
@@ -1448,6 +1502,11 @@
     if (cancelInv) {
       if (!confirm("Cancel this friend's seat? It frees the seat. Refund the buyer in Stripe if needed.")) return;
       return adminDo(function () { return API.adminCancelInvite(cancelInv.getAttribute("data-cancel-invite")); }, "Seat cancelled.");
+    }
+    var markRefunded = e.target.closest("[data-mark-refunded]");
+    if (markRefunded) {
+      if (!confirm("Have you already refunded the buyer for this seat in Stripe? This just clears it off the list.")) return;
+      return adminDo(function () { return API.adminMarkInviteRefunded(markRefunded.getAttribute("data-mark-refunded")); }, "Marked as refunded.");
     }
     var save = e.target.closest("[data-save]");
     if (save) {

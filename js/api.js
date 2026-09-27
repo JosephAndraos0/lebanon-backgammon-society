@@ -178,7 +178,17 @@
     myInvites: async function (userId) {
       if (!isLive) return [];
       return unwrap(await sb.from("seat_invites").select("*").eq("inviter_id", userId)
-        .in("status", ["ready", "claimed"]).order("created_at", { ascending: false }));
+        .in("status", ["ready", "claimed", "declined"]).order("created_at", { ascending: false }));
+    },
+    // Any already-paid seat waiting on the signed-in player's own email address, whether or
+    // not they ever clicked the invite email.
+    myPendingInvites: async function () {
+      if (!isLive) return [];
+      return unwrap(await sb.rpc("my_pending_invites"));
+    },
+    declineInvite: async function (inviteId) {
+      needLive();
+      unwrap(await sb.rpc("decline_invite", { p_invite_id: inviteId }));
     },
     getOrder: async function (orderId) {
       needLive();
@@ -260,6 +270,10 @@
     adminCancelInvite: async function (inviteId) {
       needLive();
       unwrap(await sb.rpc("admin_cancel_invite", { p_invite_id: inviteId }));
+    },
+    adminMarkInviteRefunded: async function (inviteId) {
+      needLive();
+      unwrap(await sb.rpc("admin_mark_invite_refunded", { p_invite_id: inviteId }));
     },
     adminSetEnrollmentStatus: async function (id, status) {
       needLive();
