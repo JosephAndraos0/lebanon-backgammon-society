@@ -4,7 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 // The supabase/ folder of this repo (override with LBS_SUPABASE_DIR, ending in a slash, if needed).
 const root = process.env.LBS_SUPABASE_DIR || fileURLToPath(new URL('../../supabase/', import.meta.url));
-const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 ; 'fresh' = schema.sql only
+const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 + 004 ; 'fresh' = schema.sql only
 const db = new PGlite();
 
 await db.exec(`
@@ -29,6 +29,7 @@ if (mode === 'migrate') {
   await db.exec(`insert into auth.users(id,email,raw_user_meta_data) values ('11111111-1111-1111-1111-111111111111','old@x.com','{"full_name":"Old Timer"}');`);
   await db.exec(fs.readFileSync(root + 'migrations/002_profiles_holds_orders_invites.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/003_decline_invite.sql', 'utf8'));
+  await db.exec(fs.readFileSync(root + 'migrations/004_event_photos.sql', 'utf8'));
 } else {
   await db.exec(fs.readFileSync(root + 'schema.sql', 'utf8'));
 }
@@ -204,6 +205,15 @@ await blocked('claiming after declining', () => as(p5, 'authenticated', `select 
 await blocked('non-admin marking a decline refunded', () => as(p1, 'authenticated', `select admin_mark_invite_refunded($1)`, [inv3.id]), 'not_admin');
 await as(admin, 'authenticated', `select admin_mark_invite_refunded($1)`, [inv3.id]);
 ok('admin closes it out once refunded in Stripe', (await val(`select status from seat_invites where id=$1`, [inv3.id])).status === 'cancelled');
+
+// ---- event photos (migration 004)
+await as(admin, 'authenticated', `update events set image_url=$1 where id=$2`, ['https://x.supabase.co/storage/v1/object/public/event-photos/' + ev + '/photo.jpg', ev]);
+ok('admin can set an event photo', (await val(`select image_url from events where id=$1`, [ev])).image_url !== null);
+await blocked('non-admin editing an event', async () => { const r = await as(p1, 'authenticated', `update events set image_url='x' where id=$1 returning id`, [ev]); if (!r.rows.length) throw new Error('0 rows (RLS)'); });
+await as(admin, 'authenticated', `insert into storage.objects(bucket_id,name) values ('event-photos',$1)`, [`${ev}/photo.jpg`]);
+await blocked('non-admin uploading an event photo', () => as(p1, 'authenticated', `insert into storage.objects(bucket_id,name) values ('event-photos',$1)`, [`${ev}/x.jpg`]));
+await blocked('anon uploading an event photo', () => as(null, 'anon', `insert into storage.objects(bucket_id,name) values ('event-photos',$1)`, [`${ev}/x.jpg`]));
+ok('anyone can read event photos', (await as(null, 'anon', `select count(*)::int c from storage.objects where bucket_id='event-photos'`)).rows[0].c >= 1);
 
 // ---- rankings & old behaviour still fine
 await as(admin, 'authenticated', `update enrollments set points=100, final_place=1 where user_id=$1 and event_id=$2`, [p1, ev]);

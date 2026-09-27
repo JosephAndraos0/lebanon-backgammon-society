@@ -240,7 +240,8 @@
   /* ---------------------------------------------------------------- cards */
   function eventCard(ev) {
     var pct = Math.min(100, Math.round((ev.taken / ev.max_players) * 100));
-    return '<div class="card" data-open-event="' + esc(ev.slug) + '" tabindex="0" role="link">' +
+    var photo = ev.image_url ? ' style="background-image:linear-gradient(rgba(35,22,9,.82),rgba(35,22,9,.82)),url(&quot;' + esc(ev.image_url) + '&quot;)"' : "";
+    return '<div class="card' + (ev.image_url ? " has-photo" : "") + '"' + photo + ' data-open-event="' + esc(ev.slug) + '" tabindex="0" role="link">' +
       statusBadge(ev.status) +
       "<h3>" + esc(ev.name) + "</h3>" +
       '<div class="card-meta">' +
@@ -959,6 +960,32 @@
     });
   }
 
+  // Shrink to at most 1280px on the long side, keep the original aspect ratio, re-encode as JPEG.
+  function processEventPhoto(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) throw new Error("empty image");
+          var scale = Math.min(1, 1280 / Math.max(w, h));
+          var ow = Math.round(w * scale), oh = Math.round(h * scale);
+          var cv = document.createElement("canvas"); cv.width = ow; cv.height = oh;
+          cv.getContext("2d").drawImage(img, 0, 0, ow, oh);
+          URL.revokeObjectURL(url);
+          if (cv.toBlob) cv.toBlob(function (b) { b ? resolve(b) : reject(new Error("encode")); }, "image/jpeg", 0.82);
+          else {
+            var bin = atob(cv.toDataURL("image/jpeg", 0.82).split(",")[1]), arr = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+            resolve(new Blob([arr], { type: "image/jpeg" }));
+          }
+        } catch (e) { URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+
   /* ---------------------------------------------------------------- claim a friend's seat */
   async function renderClaim(token, tk) {
     var box = $("claimContent");
@@ -1285,10 +1312,17 @@
     return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function openEventForm(ev) {
-    var v = ev || { name: "", slug: "", venue: "", starts_at: new Date(Date.now() + 14 * 864e5).toISOString(), entry_fee: 25, max_players: 16, description: "", status: "draft", prizes: [200, 120, 80] };
+    var v = ev || { name: "", slug: "", venue: "", starts_at: new Date(Date.now() + 14 * 864e5).toISOString(), entry_fee: 25, max_players: 16, description: "", status: "draft", prizes: [200, 120, 80], image_url: null };
     var pz = prizesOf(v);
+    var ef = { blob: null, preview: null, imageUrl: v.image_url || null };
     openModal('<div class="modal-head"><h3>' + (ev ? "Edit tournament" : "New tournament") + '</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
       '<form id="eventForm" novalidate>' +
+      '<div class="field"><label>Tournament photo (optional)</label><div class="photo-block">' +
+        '<div class="event-photo-preview" id="efPreview"></div>' +
+        '<div class="photo-side"><div class="photo-btns"><button type="button" class="btn btn-ghost" id="efUp">Upload photo</button>' +
+        '<button type="button" class="btn btn-ghost danger" id="efRemove" hidden>Remove photo</button></div>' +
+        "<small>Shown faded behind this tournament's card, so the name stays easy to read. Landscape photos work best.</small></div>" +
+        '<input type="file" id="efFile" accept="image/*" hidden></div></div>' +
       '<div class="field"><label for="fName">Name</label><input id="fName" value="' + esc(v.name) + '" placeholder="Hamra Winter Cup"></div>' +
       '<div class="field"><label for="fSlug">Web address</label><input id="fSlug" value="' + esc(v.slug) + '" placeholder="hamra-winter-cup" autocapitalize="off"><small>lebanonbackgammonsociety.com/#/event/<span id="fSlugPreview">' + esc(v.slug) + "</span></small></div>" +
       '<div class="field"><label for="fVenue">Venue</label><input id="fVenue" value="' + esc(v.venue) + '" placeholder="Backroom Lounge, Hamra"></div>' +
@@ -1303,9 +1337,32 @@
     var slugTouched = !!ev;
     $("fName").addEventListener("input", function () { if (!slugTouched) { $("fSlug").value = slugify($("fName").value); $("fSlugPreview").textContent = $("fSlug").value; } });
     $("fSlug").addEventListener("input", function () { slugTouched = true; $("fSlugPreview").textContent = slugify($("fSlug").value); });
+
+    function paintEventPhoto() {
+      var url = ef.preview || ef.imageUrl;
+      $("efPreview").innerHTML = url ? '<img src="' + esc(url) + '" alt="">' : "No photo yet";
+      $("efUp").textContent = url ? "Change photo" : "Upload photo";
+      $("efRemove").hidden = !url;
+    }
+    paintEventPhoto();
+    $("efUp").onclick = function () { $("efFile").click(); };
+    $("efFile").onchange = function () {
+      var f = this.files && this.files[0]; this.value = "";
+      if (!f) return;
+      ef.processing = processEventPhoto(f).then(function (blob) {
+        if (ef.preview) URL.revokeObjectURL(ef.preview);
+        ef.blob = blob; ef.preview = URL.createObjectURL(blob); paintEventPhoto();
+      }).catch(function () { $("fError").textContent = "That photo couldn't be read. Please try a different one."; $("fError").hidden = false; });
+    };
+    $("efRemove").onclick = function () {
+      if (ef.preview) URL.revokeObjectURL(ef.preview);
+      ef.blob = null; ef.preview = null; ef.imageUrl = null; ef.processing = null; paintEventPhoto();
+    };
+
     $("eventForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       var err = $("fError"); err.hidden = true;
+      if (ef.processing) await ef.processing;
       var p = [+$("fP1").value, +$("fP2").value, +$("fP3").value];
       var obj = { name: $("fName").value.trim(), slug: slugify($("fSlug").value || $("fName").value), venue: $("fVenue").value.trim(),
         starts_at: $("fStart").value ? new Date($("fStart").value).toISOString() : null, status: $("fStatus").value,
@@ -1314,8 +1371,14 @@
         : !(obj.entry_fee >= 0) ? "Entry fee must be 0 or more." : !(obj.max_players >= 2 && obj.max_players <= 128) ? "Max players must be between 2 and 128."
         : !(p[0] >= 0 && p[1] >= 0 && p[2] >= 0) ? "Prizes must be 0 or more." : "";
       if (problem) { err.textContent = problem; err.hidden = false; return; }
+      if (!ef.blob && ef.imageUrl !== (v.image_url || null)) obj.image_url = ef.imageUrl;   // removed, no replacement picked
       try {
+        if (ef.blob && ev) { obj.image_url = await API.uploadEventImage(ev.id, ef.blob); }
         var saved = await API.adminSaveEvent(obj, ev && ev.id);
+        if (ef.blob && !ev) {
+          var url = await API.uploadEventImage(saved.id, ef.blob);
+          saved = await API.adminSaveEvent({ image_url: url }, saved.id);
+        }
         closeModal(); await loadEvents(true); toast("Saved.");
         if (ev && parseRoute().name === "adminEvent") { go("admin/" + saved.slug); } else go("admin/" + saved.slug);
       } catch (ex) { err.textContent = /duplicate key/.test(errMsg(ex)) ? "That web address is already used by another tournament." : errMsg(ex); err.hidden = false; }

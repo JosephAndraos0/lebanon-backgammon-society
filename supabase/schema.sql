@@ -636,3 +636,21 @@ grant execute on function
   to authenticated;
 grant execute on function public.get_invite(text), public.seats_taken(uuid) to anon, authenticated;
 grant select on public.public_profiles, public.public_enrollments, public.event_seats to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Migration 004: a tournament photo, shown faded behind its card. Photos live
+-- in their own public bucket; only the admin can write to it (see migration
+-- 004_event_photos.sql for the reasoning).
+alter table public.events add column if not exists image_url text;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('event-photos', 'event-photos', true, 3145728, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update set public = true, file_size_limit = 3145728,
+  allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp'];
+
+drop policy if exists event_photos_select on storage.objects;
+drop policy if exists event_photos_write on storage.objects;
+create policy event_photos_select on storage.objects for select using (bucket_id = 'event-photos');
+create policy event_photos_write on storage.objects for all to authenticated
+  using (bucket_id = 'event-photos' and public.is_admin())
+  with check (bucket_id = 'event-photos' and public.is_admin());

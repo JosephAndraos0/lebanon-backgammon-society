@@ -148,6 +148,7 @@
     padding:20px; display:flex; flex-direction:column; gap:14px; transition:.15s; cursor:pointer;
   }
   .card:hover{ border-color:var(--brass); transform:translateY(-2px); box-shadow:var(--shadow); }
+  .card.has-photo{ background-size:cover; background-position:center; }
   .badge{ display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px; width:fit-content; }
   .badge-live{ background:rgba(193,73,90,0.16); color:var(--burgundy-bright); }
   .badge-upcoming{ background:rgba(198,161,91,0.14); color:var(--brass-bright); }
@@ -570,6 +571,12 @@ footer{ padding-bottom:calc(36px + env(safe-area-inset-bottom)); }
 .photo-btns{ display:flex; gap:10px; flex-wrap:wrap; }
 .photo-btns .btn{ flex:1; }
 .photo-side small{ color:var(--muted); font-size:12.5px; }
+.event-photo-preview{
+  width:120px; height:80px; border-radius:10px; background:var(--surface-2); border:2px solid var(--line-strong);
+  background-size:cover; background-position:center; flex-shrink:0; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:11px; text-align:center; padding:6px;
+}
+.event-photo-preview img{ width:100%; height:100%; object-fit:cover; }
 .skill{ background:var(--surface); border:1px solid var(--line-strong); border-radius:12px; padding:10px 16px 14px; }
 .skill input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:44px; min-height:44px; padding:0; margin:0; border:none; background:transparent; }
 .skill input[type=range]:focus{ outline:none; }

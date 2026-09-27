@@ -233,6 +233,12 @@
       if (id) return unwrap(await sb.from("events").update(ev).eq("id", id).select().single());
       return unwrap(await sb.from("events").insert(ev).select().single());
     },
+    uploadEventImage: async function (eventId, blob) {
+      needLive();
+      var path = eventId + "/photo.jpg";
+      unwrap(await sb.storage.from("event-photos").upload(path, blob, { upsert: true, contentType: "image/jpeg", cacheControl: "3600" }));
+      return sb.storage.from("event-photos").getPublicUrl(path).data.publicUrl + "?v=" + Date.now();
+    },
     adminDeleteEvent: async function (id) {
       needLive();
       unwrap(await sb.from("events").delete().eq("id", id));
