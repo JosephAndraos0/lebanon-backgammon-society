@@ -12,6 +12,6 @@ window.LBS_CONFIG = {
   // Shown to players who reserve a seat while online payment is off.
   PAYMENT_INSTRUCTIONS: "We'll confirm your seat as soon as your entry fee is received. Contact us to arrange payment.",
 
-  CONTACT_EMAIL: "hello@lebanonbackgammonsociety.com",
+  CONTACT_EMAIL: "lebanonbackgammonsociety@gmail.com",
   TIMEZONE: "Asia/Beirut"
 };
