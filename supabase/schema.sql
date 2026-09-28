@@ -654,3 +654,20 @@ create policy event_photos_select on storage.objects for select using (bucket_id
 create policy event_photos_write on storage.objects for all to authenticated
   using (bucket_id = 'event-photos' and public.is_admin())
   with check (bucket_id = 'event-photos' and public.is_admin());
+
+-- ---------------------------------------------------------------------------
+-- Migration 005: show each player's photo on the leaderboard, not just their
+-- initials. The photo was already public (same one shown everywhere else on
+-- the site) - the leaderboard view just wasn't exposing it.
+-- (avatar_url has to go last: CREATE OR REPLACE VIEW can only append columns.)
+create or replace view public.public_rankings as
+  select p.id as user_id,
+         p.full_name,
+         count(*)::int                 as events_played,
+         coalesce(sum(e.points), 0)::int as points,
+         min(e.final_place)            as best_place,
+         p.avatar_url
+  from public.profiles p
+  join public.enrollments e on e.user_id = p.id
+  where e.status = 'paid' and e.points is not null
+  group by p.id, p.full_name;

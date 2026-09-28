@@ -288,7 +288,7 @@
 
     $("rankingsBody").innerHTML = ranks.length ? ranks.map(function (r, i) {
       return '<tr><td class="rank-num">#' + (i + 1) + "</td>" +
-        '<td><div class="player-cell">' + avatar(r.full_name, null, "avatar-muted") + '<span class="pname-wrap">' + esc(r.full_name) + "</span></div></td>" +
+        '<td><div class="player-cell">' + avatar(r.full_name, r.avatar_url, "avatar-muted") + '<span class="pname-wrap">' + esc(r.full_name) + "</span></div></td>" +
         '<td class="num hide-sm">' + r.events_played + "</td>" +
         '<td class="num hide-sm">' + (r.best_place ? "#" + r.best_place : "—") + "</td>" +
         '<td class="num points">' + r.points + "</td></tr>";

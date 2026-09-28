@@ -4,7 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 // The supabase/ folder of this repo (override with LBS_SUPABASE_DIR, ending in a slash, if needed).
 const root = process.env.LBS_SUPABASE_DIR || fileURLToPath(new URL('../../supabase/', import.meta.url));
-const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 + 004 ; 'fresh' = schema.sql only
+const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 + 004 + 005 ; 'fresh' = schema.sql only
 const db = new PGlite();
 
 await db.exec(`
@@ -30,6 +30,7 @@ if (mode === 'migrate') {
   await db.exec(fs.readFileSync(root + 'migrations/002_profiles_holds_orders_invites.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/003_decline_invite.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/004_event_photos.sql', 'utf8'));
+  await db.exec(fs.readFileSync(root + 'migrations/005_rankings_photo.sql', 'utf8'));
 } else {
   await db.exec(fs.readFileSync(root + 'schema.sql', 'utf8'));
 }
@@ -218,6 +219,7 @@ ok('anyone can read event photos', (await as(null, 'anon', `select count(*)::int
 // ---- rankings & old behaviour still fine
 await as(admin, 'authenticated', `update enrollments set points=100, final_place=1 where user_id=$1 and event_id=$2`, [p1, ev]);
 ok('rankings view still works', (await as(null, 'anon', `select count(*)::int c from public_rankings`)).rows[0].c === 1);
+ok('leaderboard exposes the player\'s photo', (await val(`select avatar_url from public_rankings where user_id=$1`, [p1])).avatar_url !== null);
 ok('old enroll functions are gone', (await val(`select count(*)::int c from pg_proc where proname in ('enroll_in_event','cancel_enrollment')`)).c === 0);
 
 console.log(fails ? `\n${fails} FAILURES` : '\nall database tests passed');
