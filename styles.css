@@ -200,6 +200,9 @@
   .footer-links{ display:flex; flex-direction:column; gap:8px; font-size:13.5px; color:var(--cream-dim); }
   .footer-links a:hover{ color:var(--brass-bright); }
   .footer-bottom{ margin-top:30px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .footer-legal{ display:flex; gap:16px; }
+  .footer-legal a{ color:var(--muted); }
+  .footer-legal a:hover{ color:var(--brass-bright); }
 
   /* ---------- event detail ---------- */
   .event-hero{ display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; align-items:flex-start; padding-top:40px; }
@@ -347,6 +350,9 @@ code{ font-family:'JetBrains Mono', monospace; font-size:.92em; background:var(-
 .champ-line .avatar, .champion-slot .avatar, .prize-card .avatar{ border:2px solid var(--brass); }
 .prose{ max-width:640px; padding-block:8px; }
 .prose > p{ color:var(--cream-dim); font-size:15px; line-height:1.7; }
+.prose p + p{ margin-top:14px; }
+.prose h3{ font-size:18px; margin-top:28px; margin-bottom:10px; }
+.prose h3:first-child{ margin-top:0; }
 .note-box{ margin-top:24px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; }
 .note-box h4{ font-family:'Plus Jakarta Sans'; font-weight:800; font-size:14px; margin-bottom:6px; }
 .note-box p{ color:var(--muted); font-size:13.5px; }

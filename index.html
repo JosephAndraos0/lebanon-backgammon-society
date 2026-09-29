@@ -276,6 +276,70 @@
   <div style="height:60px;"></div>
 </div>
 
+<!-- ===================== TERMS ===================== -->
+<div class="view" data-view="terms" hidden>
+  <section class="wrap narrow" style="padding-top:40px;">
+    <div class="eyebrow">Legal</div>
+    <h2>Terms of Service</h2>
+    <p class="section-sub">Last updated: September 2026</p>
+    <div class="prose">
+      <h3>1. Who we are</h3>
+      <p>Lebanon Backgammon Society is a small, independently run project that organizes in-person backgammon tournaments in Lebanon. We're not a registered company — think of us as an organizer with a website. These terms exist so everyone, players and us, knows where they stand.</p>
+      <h3>2. Using the site</h3>
+      <p>You need an account to join a tournament. When you sign up, we ask for your real name, phone number, and a photo — that's so other players and the organizer know who's actually going to be at the table. Give accurate information; don't create an account for someone else or impersonate another player.</p>
+      <h3>3. Entering a tournament</h3>
+      <p>Entry fees are shown up front on each tournament's page. Your seat is reserved for a short window while you pay; if payment doesn't go through in time, the seat goes back up for grabs. Once your payment clears, your seat is confirmed by our payment processor, not just by your browser telling us so.</p>
+      <h3>4. Paying for a friend</h3>
+      <p>You can pay for a friend's seat in the same checkout. They'll get a link by email to claim it, or if they already have an account under that email, they'll be offered it the next time they sign in. If they turn it down, their seat opens back up; refunding you for that seat is handled manually by the organizer, not automatically.</p>
+      <h3>5. Prizes</h3>
+      <p>Each tournament lists fixed prize amounts for 1st, 2nd, and 3rd place. Prizes are paid out by the organizer after the tournament is scored and finished. We do our best to pay out promptly, but there's no fixed deadline — if something's taking too long, email us.</p>
+      <h3>6. Matches, brackets, and disputes</h3>
+      <p>Brackets are seeded automatically once entry closes. Match results are entered by the organizer, and the organizer's decision on a result is final. We reserve the right to remove a player from an event, with a refund of unplayed entry fees at our discretion, for disruptive behavior, cheating, or no-shows.</p>
+      <h3>7. Refunds</h3>
+      <p>Entry fees are generally non-refundable once a tournament's bracket has been built, except at the organizer's discretion, for example if an event is cancelled. If you believe you were charged in error, contact us and we'll review it.</p>
+      <h3>8. No guarantees</h3>
+      <p>This is a community-run project, not a professional service. We do our best to keep the site working and tournaments running smoothly, but we can't promise the site will always be available or bug-free. We're not liable for indirect losses, like travel costs or missed work, related to a tournament being delayed, changed, or cancelled.</p>
+      <h3>9. Changes to these terms</h3>
+      <p>We may update these terms as the project grows. If we do, we'll update the date at the top. Continuing to use the site after a change means you accept the new terms.</p>
+      <h3>10. Contact</h3>
+      <p>Questions about these terms? Email <span id="termsEmail">lebanonbackgammonsociety@gmail.com</span>.</p>
+      <p class="fineprint">This page is written in plain language for a small community project, not as a substitute for formal legal advice. If you need something more formal, a lawyer familiar with Lebanese consumer or contract law is the right person to ask.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== PRIVACY ===================== -->
+<div class="view" data-view="privacy" hidden>
+  <section class="wrap narrow" style="padding-top:40px;">
+    <div class="eyebrow">Legal</div>
+    <h2>Privacy Policy</h2>
+    <p class="section-sub">Last updated: September 2026</p>
+    <div class="prose">
+      <h3>1. What we collect</h3>
+      <p>When you create an account: your name, email address, and password, handled by our authentication provider, Supabase — we never see or store your raw password.</p>
+      <p>When you complete your profile: your phone number, a profile photo, and your self-rated skill level.</p>
+      <p>When you pay for a tournament: your payment is handled entirely by Stripe. We never see or store your full card number — Stripe only tells us whether the payment succeeded.</p>
+      <p>If you invite a friend: their name and email address, so we can send them a claim link.</p>
+      <h3>2. How we use it</h3>
+      <p>Your name and photo are shown publicly on the site, on event pages, brackets, and the leaderboard, so other players know who they're playing. Your phone number and email are private — only the organizer can see them, to reach you about a tournament: a seat, a schedule change, a result.</p>
+      <p>If you opted in to updates, we may email you about upcoming tournaments. You can opt out any time by telling us.</p>
+      <h3>3. Where it's stored</h3>
+      <p>Your data lives in our database and file storage, provided by Supabase. Payments are processed by Stripe. Emails (account confirmation, password resets, friend invites) are sent through Resend. We picked these because they're standard, reputable providers — we don't sell or share your data with anyone else.</p>
+      <h3>4. Cookies and tracking</h3>
+      <p>We don't run ads, and we don't use tracking or analytics scripts. The site stores your login session in your browser so you don't have to sign in every time — that's it.</p>
+      <h3>5. Your choices</h3>
+      <p>You can update your name, phone number, and photo any time from your profile. To have your account and data deleted, email us — we'll remove what we can, though we may need to keep basic records of a paid tournament, for example that an entry fee was received, for our own bookkeeping.</p>
+      <h3>6. Who this is for</h3>
+      <p>This site is for people old enough to enter a paid tournament and hold a valid payment card. It isn't intended for children.</p>
+      <h3>7. Changes to this policy</h3>
+      <p>If we change how we handle your data, we'll update this page and the date above.</p>
+      <h3>8. Contact</h3>
+      <p>Questions about your data? Email <span id="privacyEmail">lebanonbackgammonsociety@gmail.com</span>.</p>
+      <p class="fineprint">This page is written in plain language for a small community project, not as a substitute for formal legal advice.</p>
+    </div>
+  </section>
+</div>
+
 <footer>
   <div class="wrap">
     <div class="footer-grid">
@@ -304,6 +368,7 @@
     </div>
     <div class="footer-bottom">
       <span>© 2026 Lebanon Backgammon Society</span>
+      <div class="footer-legal"><a data-nav="terms">Terms</a><a data-nav="privacy">Privacy</a></div>
       <span id="footerNote"></span>
     </div>
   </div>

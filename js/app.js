@@ -161,6 +161,8 @@
     if (parts[0] === "claim" && parts[1]) return { name: "claim", token: parts[1] };
     if (parts[0] === "admin" && parts[1]) return { name: "adminEvent", slug: parts[1] };
     if (parts[0] === "admin") return { name: "admin" };
+    if (parts[0] === "terms") return { name: "terms" };
+    if (parts[0] === "privacy") return { name: "privacy" };
     return { name: "home" };
   }
 
@@ -1598,6 +1600,8 @@
   /* ---------------------------------------------------------------- start up */
   async function start() {
     $("footerEmail").textContent = C.CONTACT_EMAIL;
+    $("termsEmail").textContent = C.CONTACT_EMAIL;
+    $("privacyEmail").textContent = C.CONTACT_EMAIL;
     $("footerNote").textContent = API.isLive ? "" : "Sample data · not connected to a database yet";
     $("sampleBanner").hidden = API.isLive;
     renderAuthSlot();
