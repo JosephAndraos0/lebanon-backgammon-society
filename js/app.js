@@ -290,7 +290,7 @@
 
     $("rankingsBody").innerHTML = ranks.length ? ranks.map(function (r, i) {
       return '<tr><td class="rank-num">#' + (i + 1) + "</td>" +
-        '<td><div class="player-cell">' + avatar(r.full_name, r.avatar_url, "avatar-muted") + '<span class="pname-wrap">' + esc(r.full_name) + "</span></div></td>" +
+        '<td><div class="player-cell"' + playerAttrs(r.full_name, r.avatar_url, r.profession) + '>' + avatar(r.full_name, r.avatar_url, "avatar-muted") + '<span class="pname-wrap">' + esc(r.full_name) + "</span></div></td>" +
         '<td class="num hide-sm">' + r.events_played + "</td>" +
         '<td class="num hide-sm">' + (r.best_place ? "#" + r.best_place : "—") + "</td>" +
         '<td class="num points">' + r.points + "</td></tr>";
@@ -317,30 +317,34 @@
   function trophySvg(color) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="1.8"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 01-10 0V4z"/><path d="M7 5H4a3 3 0 003 3M17 5h3a3 3 0 01-3 3"/></svg>';
   }
-  function slotWho(id, nameOf, avOf, placeholder) {
-    if (!id) return '<span class="slot-who"><span class="slot-name ph">' + esc(placeholder) + "</span></span>";
-    return '<span class="slot-who">' + avatar(nameOf(id), avOf(id), "avatar-xs") + '<span class="slot-name">' + esc(nameOf(id)) + "</span></span>";
+  // Attributes that make an element open the player-profile popup on click or Enter/Space.
+  function playerAttrs(name, avatarUrl, profession) {
+    return ' data-pname="' + esc(name) + '" data-pavatar="' + esc(avatarUrl || "") + '" data-pprof="' + esc(profession || "") + '" tabindex="0" role="button"';
   }
-  function matchHtml(m, nameOf, avOf, tag) {
+  function slotWho(id, nameOf, avOf, profOf, placeholder) {
+    if (!id) return '<span class="slot-who"><span class="slot-name ph">' + esc(placeholder) + "</span></span>";
+    return '<span class="slot-who"' + playerAttrs(nameOf(id), avOf(id), profOf(id)) + '>' + avatar(nameOf(id), avOf(id), "avatar-xs") + '<span class="slot-name">' + esc(nameOf(id)) + "</span></span>";
+  }
+  function matchHtml(m, nameOf, avOf, profOf, tag) {
     var t = tag ? '<div class="match-tag muted-tag">' + esc(tag) + "</div>" : "";
     if (m.status === "bye") {
       return '<div class="match done bye-match"><div class="match-tag muted-tag">Bye</div>' +
-        '<div class="slot winner">' + slotWho(m.winner, nameOf, avOf, "TBD") + '<span class="slot-score">W</span></div>' +
+        '<div class="slot winner">' + slotWho(m.winner, nameOf, avOf, profOf, "TBD") + '<span class="slot-score">W</span></div>' +
         '<div class="slot faded"><span class="slot-name">No opponent</span></div></div>';
     }
     if (m.status === "pending") {
       return '<div class="match tbd">' + t +
-        '<div class="slot">' + slotWho(m.player_a, nameOf, avOf, "TBD") + "</div>" +
-        '<div class="slot">' + slotWho(m.player_b, nameOf, avOf, "TBD") + "</div></div>";
+        '<div class="slot">' + slotWho(m.player_a, nameOf, avOf, profOf, "TBD") + "</div>" +
+        '<div class="slot">' + slotWho(m.player_b, nameOf, avOf, profOf, "TBD") + "</div></div>";
     }
     var live = m.status === "live";
     var aWin = m.winner && m.winner === m.player_a, bWin = m.winner && m.winner === m.player_b;
     var sa = m.score_a == null ? "" : m.score_a, sb = m.score_b == null ? "" : m.score_b;
     return '<div class="match ' + (live ? "live" : "done") + '">' + (live ? '<div class="match-tag">● Live</div>' : t) +
-      '<div class="slot ' + (aWin ? "winner" : "") + '">' + slotWho(m.player_a, nameOf, avOf, "TBD") + '<span class="slot-score">' + sa + "</span></div>" +
-      '<div class="slot ' + (bWin ? "winner" : "") + '">' + slotWho(m.player_b, nameOf, avOf, "TBD") + '<span class="slot-score">' + sb + "</span></div></div>";
+      '<div class="slot ' + (aWin ? "winner" : "") + '">' + slotWho(m.player_a, nameOf, avOf, profOf, "TBD") + '<span class="slot-score">' + sa + "</span></div>" +
+      '<div class="slot ' + (bWin ? "winner" : "") + '">' + slotWho(m.player_b, nameOf, avOf, profOf, "TBD") + '<span class="slot-score">' + sb + "</span></div></div>";
   }
-  function bracketHtml(matches, nameOf, avOf) {
+  function bracketHtml(matches, nameOf, avOf, profOf) {
     var rounds = B.toRounds(matches);
     var cols = rounds.map(function (r, idx) {
       var last = idx === rounds.length - 1;
@@ -349,12 +353,12 @@
         var fin = r.matches.filter(function (m) { return m.position === 1; })[0];
         var third = r.matches.filter(function (m) { return m.position === 2; })[0];
         var champ = fin && fin.status === "done" ? nameOf(fin.winner) : null;
-        body = matchHtml(fin, nameOf, avOf) +
-          '<div class="match champion"><div class="champion-slot">' + (champ ? avatar(champ, avOf(fin.winner), "avatar-lg") : trophySvg("#C6A15B")) +
+        body = matchHtml(fin, nameOf, avOf, profOf) +
+          '<div class="match champion"><div class="champion-slot"' + (champ ? playerAttrs(champ, avOf(fin.winner), profOf(fin.winner)) : "") + '>' + (champ ? avatar(champ, avOf(fin.winner), "avatar-lg") : trophySvg("#C6A15B")) +
           (champ ? "<b>" + esc(champ) + "</b><span>Champion</span>" : '<b class="ph">TBD</b><span>Champion</span>') + "</div></div>" +
-          (third ? matchHtml(third, nameOf, avOf, "Third place") : "");
+          (third ? matchHtml(third, nameOf, avOf, profOf, "Third place") : "");
       } else {
-        body = r.matches.map(function (m) { return matchHtml(m, nameOf, avOf); }).join("");
+        body = r.matches.map(function (m) { return matchHtml(m, nameOf, avOf, profOf); }).join("");
       }
       return '<div class="bracket-round"><div class="round-title">' + esc(r.label) + '</div><div class="round-col">' + body + "</div></div>";
     }).join("");
@@ -398,7 +402,7 @@
     var detail = await API.eventDetail(ev.id);
     if (stale(token)) return;
     var people = {};
-    detail.players.forEach(function (p) { people[p.user_id] = { name: p.name, avatar_url: p.avatar_url }; });
+    detail.players.forEach(function (p) { people[p.user_id] = { name: p.name, avatar_url: p.avatar_url, profession: p.profession }; });
     current = { event: ev, detail: detail, people: people };
     drawEvent();
     // Someone who signed in from an "Enroll" button carries on where they left off.
@@ -449,7 +453,7 @@
 
     if (ev.status === "completed") {
       var champ = current.detail.players.filter(function (p) { return p.final_place === 1; })[0];
-      html = champ ? '<div class="champ-line">' + avatar(champ.name, champ.avatar_url, "avatar-md") + '<div><span>Champion</span><b>' + esc(champ.name) + "</b></div></div>" : "";
+      html = champ ? '<div class="champ-line"' + playerAttrs(champ.name, champ.avatar_url, champ.profession) + '>' + avatar(champ.name, champ.avatar_url, "avatar-md") + '<div><span>Champion</span><b>' + esc(champ.name) + "</b></div></div>" : "";
     } else if (ev.status === "cancelled") {
       html = '<button class="btn btn-ghost" disabled>Cancelled</button>';
     } else if (ev.status === "live") {
@@ -494,6 +498,7 @@
     var ev = current.event, d = current.detail, panel = $("edPanels");
     var nameOf = function (id) { return (current.people[id] && current.people[id].name) || "Player"; };
     var avOf = function (id) { return current.people[id] && current.people[id].avatar_url; };
+    var profOf = function (id) { return current.people[id] && current.people[id].profession; };
 
     if (state.tab === "overview") {
       var how = ev.status === "open"
@@ -506,7 +511,7 @@
       return;
     }
     if (state.tab === "bracket") {
-      panel.innerHTML = d.matches.length ? bracketHtml(d.matches, nameOf, avOf)
+      panel.innerHTML = d.matches.length ? bracketHtml(d.matches, nameOf, avOf, profOf)
         : emptyState("No bracket yet", "The bracket is published when entry closes.");
       return;
     }
@@ -515,7 +520,7 @@
         var byPlace = function (n) { return d.players.filter(function (p) { return p.final_place === n; })[0]; };
         var podium = [[1, "gold", "#C6A15B"], [2, "", "#C9BBA3"], [3, "", "#B08A56"]].map(function (x) {
           var p = byPlace(x[0]);
-          return '<div class="prize-card ' + x[1] + '">' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(x[2])) + '<div class="place">' + ["", "1st", "2nd", "3rd"][x[0]] + ' place</div><div class="who big">' + esc(p ? p.name : "—") + "</div></div>";
+          return '<div class="prize-card ' + x[1] + '"' + (p ? playerAttrs(p.name, p.avatar_url, p.profession) : "") + '>' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(x[2])) + '<div class="place">' + ["", "1st", "2nd", "3rd"][x[0]] + ' place</div><div class="who big">' + esc(p ? p.name : "—") + "</div></div>";
         }).join("");
         panel.innerHTML = '<div class="prize-grid">' + podium + "</div>";
         return;
@@ -536,7 +541,7 @@
       var place = function (n) { return d.players.filter(function (p) { return p.final_place === n; })[0]; };
       panel.innerHTML = '<div class="prize-grid">' + [0, 1, 2].map(function (i) {
         var p = place(i + 1);
-        return '<div class="prize-card ' + (i === 0 ? "gold" : "") + '">' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(["#C6A15B", "#C9BBA3", "#B08A56"][i])) +
+        return '<div class="prize-card ' + (i === 0 ? "gold" : "") + '"' + (p ? playerAttrs(p.name, p.avatar_url, p.profession) : "") + '>' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(["#C6A15B", "#C9BBA3", "#B08A56"][i])) +
           '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="amt">' + esc(money(prizes[i], ev.currency)) + '</div><div class="who">' +
           (p ? esc(p.name) : "Up for grabs") + "</div></div>";
       }).join("") + "</div>" +
@@ -546,7 +551,7 @@
     if (state.tab === "players") {
       // Only players with a confirmed (paid) seat are ever listed.
       panel.innerHTML = d.players.length ? '<div class="players-grid">' + d.players.slice().sort(function (a, b) { return (a.seed || 999) - (b.seed || 999); }).map(function (p, i) {
-        return '<div class="player-row"><span class="seed num">' + (p.seed || i + 1) + "</span>" + avatar(p.name, p.avatar_url, "avatar-md") + '<span class="pname">' + esc(p.name) + "</span></div>";
+        return '<div class="player-row"' + playerAttrs(p.name, p.avatar_url, p.profession) + '><span class="seed num">' + (p.seed || i + 1) + "</span>" + avatar(p.name, p.avatar_url, "avatar-md") + '<span class="pname">' + esc(p.name) + "</span></div>";
       }).join("") + "</div>" : emptyState("No players yet", "Be the first to join.");
     }
   }
@@ -571,6 +576,26 @@
   $("modalOverlay").addEventListener("click", function (e) { if (e.target === $("modalOverlay") && !sheetSticky) closeModal(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeModal(); dismissAuth(); } });
   document.addEventListener("click", function (e) { if (e.target.closest("[data-close-modal]")) closeModal(); });
+
+  // A quick, PR-friendly peek at a player: just their photo, name, and profession —
+  // never phone, email, or anything else private.
+  function openPlayerProfile(name, avatarUrl, profession) {
+    openModal('<div class="modal-head"><h3>Player</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
+      '<div class="player-profile">' + avatar(name, avatarUrl, "avatar-xl") +
+      '<h3 class="pp-name">' + esc(name) + '</h3>' +
+      (profession ? '<p class="pp-profession">' + esc(profession) + '</p>' : '<p class="pp-profession muted">No profession listed.</p>') +
+      '</div>');
+  }
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-pname]");
+    if (el) openPlayerProfile(el.getAttribute("data-pname"), el.getAttribute("data-pavatar") || null, el.getAttribute("data-pprof") || "");
+  });
+  document.addEventListener("keydown", function (e) {
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pname]")) {
+      e.preventDefault();
+      openPlayerProfile(e.target.getAttribute("data-pname"), e.target.getAttribute("data-pavatar") || null, e.target.getAttribute("data-pprof") || "");
+    }
+  });
 
   function sheetMessage(kind, title, text, buttons) {
     var icon = kind === "ok"
@@ -858,7 +883,7 @@
     box.innerHTML =
       '<div class="eyebrow">' + (first ? "Welcome" : "Your profile") + "</div>" +
       "<h2>" + (first ? "Let's set up your player profile" : "Edit your profile") + "</h2>" +
-      '<p class="section-sub">' + (first ? "One quick step before your first tournament. Your name and photo are shown to other players; your phone number is only seen by the organizer." : "Your name and photo are shown to other players; your phone number is only seen by the organizer.") + "</p>" +
+      '<p class="section-sub">' + (first ? "One quick step before your first tournament. Your name, photo, and profession are shown to other players; your phone number is only seen by the organizer." : "Your name, photo, and profession are shown to other players; your phone number is only seen by the organizer.") + "</p>" +
       '<form id="pfForm" class="pf-form" novalidate>' +
         '<div class="photo-block"><div class="photo-preview" id="pfPreview"></div><div class="photo-side">' +
           '<div class="photo-btns"><button type="button" class="btn btn-brass" id="pfCam">Take photo</button><button type="button" class="btn btn-ghost" id="pfUp">Upload photo</button></div>' +
@@ -868,6 +893,7 @@
         '<div class="field"><label for="pfLast">Last name</label><input id="pfLast" autocomplete="family-name" maxlength="60" value="' + esc(p.last_name) + '"></div></div>' +
         '<div class="field"><label for="pfEmail">Email</label><input id="pfEmail" type="email" value="' + esc(p.email) + '" readonly><small>This is your sign-in email.</small></div>' +
         '<div class="field"><label for="pfPhone">Phone number</label><input id="pfPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+961 70 123 456" maxlength="30" value="' + esc(p.phone) + '"><small>Include the country code. Only the organizer can see it.</small></div>' +
+        '<div class="field"><label for="pfProfession">Profession</label><input id="pfProfession" autocomplete="organization-title" placeholder="Architect, Software Engineer, Student…" maxlength="80" value="' + esc(p.profession) + '"><small>Shown on your profile, so other players know a bit about you.</small></div>' +
         '<div class="field"><label for="pfSkill">Skill level</label><div class="skill"><input id="pfSkill" type="range" min="1" max="5" step="1" value="' + (pf.skill || 3) + '"' + (pf.skill ? "" : ' class="untouched"') + '><div class="skill-ticks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div><output id="pfSkillOut" class="skill-out"></output></div></div>' +
         '<div class="field"><label id="pfMkLabel">Can we send you tournament news and updates?</label><div class="seg" role="radiogroup" aria-labelledby="pfMkLabel">' +
           '<label><input type="radio" name="pfMk" value="yes"' + (p.marketing_opt_in === true ? " checked" : "") + "><span>Yes, keep me posted</span></label>" +
@@ -913,10 +939,13 @@
       e.preventDefault(); pfError("");
       if (pf.processing) await pf.processing;
       var firstN = $("pfFirst").value.trim(), lastN = $("pfLast").value.trim(), phone = $("pfPhone").value.trim();
+      var profession = $("pfProfession").value.trim();
       var mk = document.querySelector('input[name="pfMk"]:checked');
       var digits = phone.replace(/[^0-9+]/g, "");
       var problem = !firstN || !lastN ? "Please enter your first and last name."
         : !/^\+?[0-9]{7,15}$/.test(digits) ? "Enter a valid phone number, with country code (e.g. +961 70 123 456)."
+        : !profession ? "Please add your profession."
+        : profession.length > 80 ? "That profession is too long."
         : !pf.blob && !pf.avatarUrl ? "Please add a photo so other players know who you are."
         : !pf.skill ? "Slide to pick your skill level."
         : !mk ? "Please answer the updates question." : "";
@@ -925,7 +954,7 @@
       btn.disabled = true; btn.textContent = "Saving…";
       try {
         if (pf.blob) { pf.avatarUrl = await API.uploadAvatar(state.user.id, pf.blob); pf.blob = null; }
-        state.profile = await API.saveProfile({ first: firstN, last: lastN, phone: phone, skill: pf.skill, marketing: mk.value === "yes", avatarUrl: pf.avatarUrl });
+        state.profile = await API.saveProfile({ first: firstN, last: lastN, phone: phone, skill: pf.skill, marketing: mk.value === "yes", avatarUrl: pf.avatarUrl, profession: profession });
         renderAuthSlot(); updateBanner();
         var next = state.afterProfile; state.afterProfile = null;
         if (next) { clearIntent(); toast("Profile saved."); next(); }
@@ -1459,7 +1488,8 @@
       return '<div class="admin-row' + (isPaid || live ? "" : " dim") + '">' + avatar(p.full_name, p.avatar_url, "avatar-md") +
         '<div class="ar-main"><b>' + esc(p.full_name || "—") + '</b><div class="sub">' + esc(p.email || "") +
           (p.phone ? ' · <a href="tel:' + esc(p.phone) + '">' + esc(p.phone) + "</a>" : "") +
-          (p.skill_level ? " · skill " + p.skill_level + "/5" : "") + "</div></div>" +
+          (p.skill_level ? " · skill " + p.skill_level + "/5" : "") +
+          (p.profession ? " · " + esc(p.profession) : "") + "</div></div>" +
         '<div class="ar-status">' + pill + "</div>" +
         '<div class="ar-actions">' +
         (isPaid ? '<button class="btn btn-ghost btn-sm" data-enr="' + esc(e.id) + '" data-to="pending_payment">Mark unpaid</button>'
@@ -1489,7 +1519,7 @@
 
     var bracketHtmlAdmin = "";
     if (ms.length) {
-      bracketHtmlAdmin = '<h3 class="admin-h">Bracket &amp; results</h3><p class="fineprint">Enter the final score of each match. The higher score wins and moves on. Use "Mark live" to show a match as in progress on the public bracket.</p>' +
+      bracketHtmlAdmin = '<h3 class="admin-h">Bracket &amp; results</h3><p class="fineprint">Matches are best of three — enter how many games each player won (first to 2 wins). Use "Mark live" to show a match as in progress on the public bracket.</p>' +
         B.toRounds(ms).map(function (r) {
           return '<div class="round-block"><h4>' + esc(r.label) + '</h4><div class="match-admin-grid">' + r.matches.map(function (m) {
             var third = m.round === B.toRounds(ms).length && m.position === 2;
@@ -1498,8 +1528,8 @@
             var ready = m.player_a && m.player_b;
             return '<div class="match-admin ' + m.status + '" data-match="' + m.id + '">' +
               (third ? '<div class="ma-tag">Third place</div>' : "") +
-              '<div class="ma-row"><span class="ma-name">' + esc(a) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" data-side="a" aria-label="Score for ' + esc(a) + '" value="' + (m.score_a == null ? "" : m.score_a) + '"' + (ready ? "" : " disabled") + "></div>" +
-              '<div class="ma-row"><span class="ma-name">' + esc(b) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" data-side="b" aria-label="Score for ' + esc(b) + '" value="' + (m.score_b == null ? "" : m.score_b) + '"' + (ready ? "" : " disabled") + "></div>" +
+              '<div class="ma-row"><span class="ma-name">' + esc(a) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" max="2" data-side="a" aria-label="Games won by ' + esc(a) + '" value="' + (m.score_a == null ? "" : m.score_a) + '"' + (ready ? "" : " disabled") + "></div>" +
+              '<div class="ma-row"><span class="ma-name">' + esc(b) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" max="2" data-side="b" aria-label="Games won by ' + esc(b) + '" value="' + (m.score_b == null ? "" : m.score_b) + '"' + (ready ? "" : " disabled") + "></div>" +
               '<div class="ma-actions">' + (ready ? '<button class="btn btn-brass btn-sm" data-save="' + m.id + '">' + (m.status === "done" ? "Update result" : "Save result") + "</button>" +
                 (m.status !== "done" ? '<button class="btn btn-ghost btn-sm" data-live="' + m.id + '">' + (m.status === "live" ? "Unmark live" : "Mark live") + "</button>" : '<span class="pill pill-ok pill-sm">done</span>') : '<span class="cta-note">Waiting for earlier matches</span>') + "</div></div>";
           }).join("") + "</div></div>";
@@ -1578,9 +1608,12 @@
       var card = save.closest(".match-admin"), id = save.getAttribute("data-save");
       var m = adminCtx.matches.filter(function (x) { return x.id === id; })[0];
       var sa = card.querySelector('[data-side="a"]').value, sb = card.querySelector('[data-side="b"]').value;
-      if (sa === "" || sb === "") return toast("Enter both scores.");
+      if (sa === "" || sb === "") return toast("Enter how many games each player won.");
       sa = parseInt(sa, 10); sb = parseInt(sb, 10);
-      if (sa === sb) return toast("Scores can't be tied. Someone has to win.");
+      var gamesProblem = sa === sb ? "Games can't be tied. Someone has to win."
+        : Math.max(sa, sb) !== 2 || Math.min(sa, sb) < 0 || Math.min(sa, sb) > 1 ? "Best of three: the winner needs 2 games, the loser 0 or 1."
+        : "";
+      if (gamesProblem) return toast(gamesProblem);
       return adminDo(function () {
         return API.adminSaveResult(adminCtx.matches, id, { score_a: sa, score_b: sb, winner: sa > sb ? m.player_a : m.player_b });
       }, "Result saved.");

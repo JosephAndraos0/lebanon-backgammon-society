@@ -30,6 +30,8 @@
     phone_invalid: "Enter a valid phone number, with country code (e.g. +961 70 123 456).",
     skill_invalid: "Pick your skill level.",
     marketing_required: "Please answer the updates question.",
+    profession_required: "Please add your profession.",
+    profession_too_long: "That profession is too long.",
     photo_required: "Please add a photo so other players know who you are.",
     avatar_invalid: "That photo couldn't be used. Please try another.",
     need_two_players: "You need at least 2 paid players to build a bracket.",
@@ -118,7 +120,7 @@
       needLive();
       return unwrap(await sb.rpc("save_profile", {
         p_first: p.first, p_last: p.last, p_phone: p.phone, p_skill: p.skill,
-        p_marketing: p.marketing, p_avatar_url: p.avatarUrl || null
+        p_marketing: p.marketing, p_avatar_url: p.avatarUrl || null, p_profession: p.profession
       }));
     },
 
@@ -150,13 +152,13 @@
       var ids = enr.map(function (e) { return e.user_id; });
       var people = {};
       if (ids.length) {
-        unwrap(await sb.from("public_profiles").select("id, full_name, avatar_url").in("id", ids))
+        unwrap(await sb.from("public_profiles").select("id, full_name, avatar_url, profession").in("id", ids))
           .forEach(function (p) { people[p.id] = p; });
       }
       var players = enr.map(function (e) {
         var p = people[e.user_id] || {};
         return { user_id: e.user_id, name: p.full_name || "Player", avatar_url: p.avatar_url || null,
-                 status: e.status, seed: e.seed, final_place: e.final_place };
+                 profession: p.profession || null, status: e.status, seed: e.seed, final_place: e.final_place };
       });
       return { players: players, matches: matches };
     },
@@ -250,7 +252,7 @@
     adminEnrollments: async function (eventId) {
       needLive();
       return unwrap(await sb.from("enrollments")
-        .select("*, profiles(full_name, email, phone, skill_level, avatar_url)")
+        .select("*, profiles(full_name, email, phone, skill_level, avatar_url, profession)")
         .eq("event_id", eventId).neq("status", "cancelled").order("created_at", { ascending: true }));
     },
     adminInvites: async function (eventId) {

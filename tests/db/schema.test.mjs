@@ -4,7 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 // The supabase/ folder of this repo (override with LBS_SUPABASE_DIR, ending in a slash, if needed).
 const root = process.env.LBS_SUPABASE_DIR || fileURLToPath(new URL('../../supabase/', import.meta.url));
-const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 + 004 + 005 ; 'fresh' = schema.sql only
+const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 + 004 + 005 + 006 ; 'fresh' = schema.sql only
 const db = new PGlite();
 
 await db.exec(`
@@ -31,6 +31,7 @@ if (mode === 'migrate') {
   await db.exec(fs.readFileSync(root + 'migrations/003_decline_invite.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/004_event_photos.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/005_rankings_photo.sql', 'utf8'));
+  await db.exec(fs.readFileSync(root + 'migrations/006_profession.sql', 'utf8'));
 } else {
   await db.exec(fs.readFileSync(root + 'schema.sql', 'utf8'));
 }
@@ -64,17 +65,19 @@ if (mode === 'migrate') ok('pre-existing user was backfilled', (await val(`selec
 await blocked('player editing own profile row directly', () => as(p1, 'authenticated', `update profiles set phone='1' where id=$1`, [p1]));
 await blocked('player making self admin', () => as(p1, 'authenticated', `update profiles set is_admin=true where id=$1`, [p1]));
 const av = (u) => `https://x.supabase.co/storage/v1/object/public/avatars/${u}/avatar.jpg?v=1`;
-await blocked('save_profile without photo', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,true,null)`), 'photo_required');
-await blocked('save_profile with someone else\'s photo path', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,true,$1)`, [av(p2)]), 'avatar_invalid');
-await blocked('save_profile bad phone', () => as(p1, 'authenticated', `select save_profile('Player','One','abc',3,true,$1)`, [av(p1)]), 'phone_invalid');
-await blocked('save_profile bad skill', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',9,true,$1)`, [av(p1)]), 'skill_invalid');
-await blocked('save_profile missing marketing answer', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,null,$1)`, [av(p1)]), 'marketing_required');
-await blocked('save_profile anonymous', () => as(null, 'anon', `select save_profile('A','B','+96170123456',3,true,null)`));
+await blocked('save_profile without photo', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,true,null,'Engineer')`), 'photo_required');
+await blocked('save_profile with someone else\'s photo path', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,true,$1,'Engineer')`, [av(p2)]), 'avatar_invalid');
+await blocked('save_profile bad phone', () => as(p1, 'authenticated', `select save_profile('Player','One','abc',3,true,$1,'Engineer')`, [av(p1)]), 'phone_invalid');
+await blocked('save_profile bad skill', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',9,true,$1,'Engineer')`, [av(p1)]), 'skill_invalid');
+await blocked('save_profile missing marketing answer', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,null,$1,'Engineer')`, [av(p1)]), 'marketing_required');
+await blocked('save_profile missing profession', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,true,$1,'')`, [av(p1)]), 'profession_required');
+await blocked('save_profile profession too long', () => as(p1, 'authenticated', `select save_profile('Player','One','+96170123456',3,true,$1,$2)`, [av(p1), 'x'.repeat(81)]), 'profession_too_long');
+await blocked('save_profile anonymous', () => as(null, 'anon', `select save_profile('A','B','+96170123456',3,true,null,'Engineer')`));
 for (const [u, n] of [[p1, 'One'], [p2, 'Two'], [p3, 'Three']])
-  await as(u, 'authenticated', `select save_profile('Player',$2,'+961 70 123 456',3,false,$1)`, [av(u), n]);
-const prof = await val(`select phone, onboarded_at, full_name, marketing_opt_in from profiles where id=$1`, [p1]);
-ok('phone normalised, onboarded, consent stored', prof.phone === '+96170123456' && prof.onboarded_at && prof.marketing_opt_in === false && prof.full_name === 'Player One');
-ok('public_profiles exposes name + photo only', Object.keys((await as(null, 'anon', `select * from public_profiles limit 1`)).rows[0]).sort().join() === 'avatar_url,full_name,id');
+  await as(u, 'authenticated', `select save_profile('Player',$2,'+961 70 123 456',3,false,$1,'Backgammon Enthusiast')`, [av(u), n]);
+const prof = await val(`select phone, onboarded_at, full_name, marketing_opt_in, profession from profiles where id=$1`, [p1]);
+ok('phone normalised, onboarded, consent stored, profession saved', prof.phone === '+96170123456' && prof.onboarded_at && prof.marketing_opt_in === false && prof.full_name === 'Player One' && prof.profession === 'Backgammon Enthusiast');
+ok('public_profiles exposes name, photo, and profession (not phone/email)', Object.keys((await as(null, 'anon', `select * from public_profiles limit 1`)).rows[0]).sort().join() === 'avatar_url,full_name,id,profession');
 ok('anon cannot read phones', (await as(null, 'anon', `select count(*)::int c from profiles`)).rows[0].c === 0);
 ok('player reads only own profile', (await as(p1, 'authenticated', `select count(*)::int c from profiles`)).rows[0].c === 1);
 // storage policies (own folder only)
@@ -157,7 +160,7 @@ ok('claimed friend now listed publicly', (await as(null, 'anon', `select count(*
 await blocked('cancel someone else\'s order', () => as(p1, 'authenticated', `select cancel_order($1)`, [o3.id]), 'cannot_cancel');
 await blocked('cancel an already-paid order', () => as(p2, 'authenticated', `select cancel_order($1)`, [o3.id]), 'cannot_cancel');
 const o4 = (await as(p4, 'authenticated', `select 1`)).rows; // p4 has no profile; onboard p4 quickly then order + cancel
-await as(p4, 'authenticated', `select save_profile('Four','Four','+96170999999',2,true,$1)`, [av(p4)]);
+await as(p4, 'authenticated', `select save_profile('Four','Four','+96170999999',2,true,$1,'Architect')`, [av(p4)]);
 const free1 = (await as(p4, 'authenticated', `select * from create_order($1,true,'[]')`, [free])).rows[0];
 ok('free event: instantly paid, no payment needed', free1.status === 'paid' && (await val(`select status from enrollments where user_id=$1 and event_id=$2`, [p4, free])).status === 'paid');
 const o5 = (await as(p1, 'authenticated', `select * from create_order($1,true,'[]')`, [free])).rows[0];
@@ -184,7 +187,7 @@ ok('late payment with no room is flagged for admin review (not silently lost)', 
 
 // ---- declining a paid invite (friend doesn't want the seat, never visits the claim link)
 const p5 = await newUser('p5@x.com', { first_name: 'Player', last_name: 'Five' });
-await as(p5, 'authenticated', `select save_profile('Player','Five','+96170555555',3,true,$1)`, [av(p5)]);
+await as(p5, 'authenticated', `select save_profile('Player','Five','+96170555555',3,true,$1,'Teacher')`, [av(p5)]);
 const ev3 = (await as(admin, 'authenticated', `insert into events(slug,name,starts_at,status,max_players,entry_fee) values ('c3','C3', now()+interval '7 days','open',5,10) returning id`)).rows[0].id;
 const o6 = (await as(p1, 'authenticated', `select * from create_order($1,true,$2::jsonb)`, [ev3, JSON.stringify([{ email: 'p5@x.com', name: 'Five' }])])).rows[0];
 await as(null, 'service_role', `select _mark_order_paid($1,'cs_decline')`, [o6.id]);
@@ -220,6 +223,7 @@ ok('anyone can read event photos', (await as(null, 'anon', `select count(*)::int
 await as(admin, 'authenticated', `update enrollments set points=100, final_place=1 where user_id=$1 and event_id=$2`, [p1, ev]);
 ok('rankings view still works', (await as(null, 'anon', `select count(*)::int c from public_rankings`)).rows[0].c === 1);
 ok('leaderboard exposes the player\'s photo', (await val(`select avatar_url from public_rankings where user_id=$1`, [p1])).avatar_url !== null);
+ok('leaderboard exposes the player\'s profession', (await val(`select profession from public_rankings where user_id=$1`, [p1])).profession === 'Backgammon Enthusiast');
 ok('old enroll functions are gone', (await val(`select count(*)::int c from pg_proc where proname in ('enroll_in_event','cancel_enrollment')`)).c === 0);
 
 console.log(fails ? `\n${fails} FAILURES` : '\nall database tests passed');

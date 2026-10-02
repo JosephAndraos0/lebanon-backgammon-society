@@ -21,7 +21,7 @@
   function profile(email, first, last, extra) {
     var p = { id: uid(), email: email, first_name: first, last_name: last, full_name: first + " " + last, is_admin: false,
       phone: "+96170123456", avatar_url: root.location.origin + "/tests/ui/av.svg", skill_level: 3, marketing_opt_in: true,
-      onboarded_at: iso(Date.now() - 864e5), created_at: iso(Date.now() - 864e5) };
+      profession: "Backgammon Enthusiast", onboarded_at: iso(Date.now() - 864e5), created_at: iso(Date.now() - 864e5) };
     Object.keys(extra || {}).forEach(function (k) { p[k] = extra[k]; });
     db.profiles.push(p); users.push({ id: p.id, email: email, password: "password123" });
     return p;
@@ -93,9 +93,12 @@
       if (!a.p_skill || a.p_skill < 1 || a.p_skill > 5) throw err("skill_invalid");
       if (a.p_marketing == null) throw err("marketing_required");
       if (a.p_avatar_url && a.p_avatar_url.indexOf("/storage/v1/object/public/avatars/" + me() + "/") === -1) throw err("avatar_invalid");
+      var prof2 = (a.p_profession || "").trim();
+      if (!prof2) throw err("profession_required");
+      if (prof2.length > 80) throw err("profession_too_long");
       var p = prof(me()), av = a.p_avatar_url || p.avatar_url;
       if (!av) throw err("photo_required");
-      p.first_name = f; p.last_name = l; p.full_name = f + " " + l; p.phone = ph; p.skill_level = a.p_skill; p.marketing_opt_in = a.p_marketing; p.avatar_url = av;
+      p.first_name = f; p.last_name = l; p.full_name = f + " " + l; p.phone = ph; p.skill_level = a.p_skill; p.marketing_opt_in = a.p_marketing; p.avatar_url = av; p.profession = prof2;
       p.onboarded_at = p.onboarded_at || iso(Date.now());
       return clone(p);
     },
@@ -202,7 +205,7 @@
     if (t === "events") return db.events.filter(function (e) { return e.status !== "draft" || isAdmin(); });
     if (t === "event_seats") return db.events.map(function (e) { return { event_id: e.id, taken: seatsTaken(e.id), paid: db.enrollments.filter(function (x) { return x.event_id === e.id && x.status === "paid"; }).length }; });
     if (t === "public_enrollments") return db.enrollments.filter(function (e) { return e.status === "paid"; }).map(function (e) { return pick(e, ["event_id", "user_id", "status", "seed", "final_place"]); });
-    if (t === "public_profiles") return db.profiles.map(function (p) { return pick(p, ["id", "full_name", "avatar_url"]); });
+    if (t === "public_profiles") return db.profiles.map(function (p) { return pick(p, ["id", "full_name", "avatar_url", "profession"]); });
     if (t === "public_rankings") return [];
     if (t === "profiles") return db.profiles.filter(function (p) { return p.id === m || isAdmin(); });
     if (t === "enrollments") return db.enrollments.filter(function (e) { return e.user_id === m || isAdmin(); });
@@ -298,7 +301,7 @@
           setTimeout(function () {
             if (users.some(function (u) { return u.email === a.email; })) return res({ data: null, error: { message: "User already registered" } });
             var md = (a.options && a.options.data) || {};
-            var p = profile(a.email, md.first_name || "", md.last_name || "", { phone: null, avatar_url: null, skill_level: null, marketing_opt_in: null, onboarded_at: null });
+            var p = profile(a.email, md.first_name || "", md.last_name || "", { phone: null, avatar_url: null, skill_level: null, marketing_opt_in: null, profession: null, onboarded_at: null });
             users[users.length - 1].password = a.password;
             calls.push("signUp " + a.email);
             if (cfg.confirm) { emails.push({ to: a.email, kind: "confirm" }); save(); return res({ data: { user: { id: p.id }, session: null }, error: null }); }

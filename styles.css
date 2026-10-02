@@ -286,6 +286,11 @@
   .success-box svg{ width:52px; height:52px; margin-bottom:16px; }
   .success-box h3{ font-family:'Lora'; font-weight:700; font-size:22px; margin-bottom:8px; }
   .success-box p{ color:var(--muted); font-size:13.5px; margin-bottom:22px; }
+  .player-profile{ text-align:center; padding:10px 0 4px; }
+  .player-profile .avatar-xl{ margin-inline:auto; border:3px solid var(--brass); }
+  .player-profile .pp-name{ font-family:'Lora'; font-weight:700; font-size:22px; margin-top:16px; }
+  .player-profile .pp-profession{ color:var(--brass-bright); font-size:14px; margin-top:6px; }
+  .player-profile .pp-profession.muted{ color:var(--muted); font-style:italic; }
   .toast{ position:fixed; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%) translateY(16px); background:var(--brass); color:var(--ink); font-weight:700; font-size:13.5px; padding:13px 22px; border-radius:999px; z-index:200; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .25s ease, transform .25s ease, visibility .25s; box-shadow:var(--shadow); max-width:calc(100vw - 32px); text-align:center; }
   .toast.show{ opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
 
@@ -381,7 +386,8 @@ code{ font-family:'JetBrains Mono', monospace; font-size:.92em; background:var(-
 .field small{ display:block; margin-top:5px; font-size:11.5px; color:var(--muted); }
 .field-row > .field, .field-row > input{ flex:1; min-width:0; }
 .field-row input{ width:100%; background:var(--surface); border:1px solid var(--line-strong); color:var(--cream); padding:11px 13px; border-radius:9px; font-size:14px; font-family:inherit; }
-button:focus-visible, a:focus-visible, .card:focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+button:focus-visible, a:focus-visible, .card:focus-visible, [data-pname]:focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+[data-pname]{ cursor:pointer; }
 
 /* admin */
 .btn.danger, .btn-ghost.danger{ color:#e58a94; }
