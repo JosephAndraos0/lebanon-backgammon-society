@@ -60,7 +60,7 @@ Refresh the site: an **Admin** link appears.
    "Mark live" shows a match as in progress on the public bracket.
 6. **Finish event & award points.** Places 1-4 get 100/60/35/25 points, earlier exits 15/8/4 - the Society rankings on the home page update.
 
-We do not award cash prizes. Each event page just says that prizes are announced by the organizer.
+We do not award cash prizes.
 
 ## 5. Put it online on lebanonbackgammonsociety.com
 

@@ -254,7 +254,6 @@
         '<div class="fill-text">' + ev.taken + " / " + ev.max_players + " seats filled</div></div>" +
       '<div class="card-foot">' +
         '<div class="fee">' + esc(money(ev.entry_fee, ev.currency)) + '<span> entry</span></div>' +
-        '<div style="text-align:right;"><div class="fee">Prizes</div><div class="fee-sub">announced by the organizer</div></div>' +
       "</div></div>";
   }
   document.addEventListener("keydown", function (e) {
@@ -416,7 +415,6 @@
     $("edVenue").textContent = ev.venue || "To be announced";
     $("edDate").textContent = fmtDate(ev.starts_at);
     $("edFee").textContent = money(ev.entry_fee, ev.currency);
-    $("edPool").textContent = "To be announced";
     $("edPlayers").textContent = ev.taken + " / " + ev.max_players;
     document.title = ev.name + " · Lebanon Backgammon Society";
 
@@ -538,7 +536,7 @@
           '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="who">' +
           (p ? esc(p.name) : "Up for grabs") + "</div></div>";
       }).join("") + "</div>" +
-      '<p class="fineprint">Prizes for this tournament will be announced by the organizer.</p>';
+      "";
       return;
     }
     if (state.tab === "players") {

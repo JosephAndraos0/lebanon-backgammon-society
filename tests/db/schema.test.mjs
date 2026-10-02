@@ -4,7 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 // The supabase/ folder of this repo (override with LBS_SUPABASE_DIR, ending in a slash, if needed).
 const root = process.env.LBS_SUPABASE_DIR || fileURLToPath(new URL('../../supabase/', import.meta.url));
-const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 + 004 + 005 + 006 ; 'fresh' = schema.sql only
+const mode = process.argv[2] || 'migrate';   // 'migrate' = baseline + 002 + 003 + 004 + 005 + 006 + 007 ; 'fresh' = schema.sql only
 const db = new PGlite();
 
 await db.exec(`
@@ -32,6 +32,7 @@ if (mode === 'migrate') {
   await db.exec(fs.readFileSync(root + 'migrations/004_event_photos.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/005_rankings_photo.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/006_profession.sql', 'utf8'));
+  await db.exec(fs.readFileSync(root + 'migrations/007_zero_prizes.sql', 'utf8'));
 } else {
   await db.exec(fs.readFileSync(root + 'schema.sql', 'utf8'));
 }
