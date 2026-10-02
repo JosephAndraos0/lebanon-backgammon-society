@@ -119,8 +119,19 @@
   /* ---------------------------------------------------------------- data */
   async function loadEvents(force) {
     if (state.events && !force) return state.events;
-    state.events = await API.listEvents();
+    state.events = sortEvents(await API.listEvents());
     return state.events;
+  }
+  // Live first, then upcoming with the soonest date on top, then drafts, then finished ones (newest first), cancelled last.
+  function sortEvents(list) {
+    var group = { live: 0, open: 1, draft: 2, completed: 3, cancelled: 4 };
+    function g(e) { return group[e.status] == null ? 2 : group[e.status]; }
+    function t(e) { return new Date(e.starts_at).getTime() || 0; }
+    return list.slice().sort(function (x, y) {
+      var d = g(x) - g(y);
+      if (d) return d;
+      return g(x) === 3 || g(x) === 4 ? t(y) - t(x) : t(x) - t(y);
+    });
   }
   // Paid/held seats and unpaid orders that are still inside their hold window.
   async function loadMine() {
