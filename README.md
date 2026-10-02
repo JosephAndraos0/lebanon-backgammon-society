@@ -51,7 +51,7 @@ Refresh the site: an **Admin** link appears.
 
 ## 4. Run a tournament
 
-1. **Admin -> New event.** Name, venue, date, entry fee, max players, prize split. Save it as *draft*, then **Publish** (status *open*).
+1. **Admin -> New event.** Name, venue, date, entry fee, max players. Save it as *draft*, then **Publish** (status *open*).
 2. Players create accounts and hit **Enroll**. They get a reserved seat (status "awaiting payment").
 3. When someone pays you, open the event in Admin and press **Mark paid**. (With online payments on, this happens automatically.)
 4. **Close entry & build bracket.** Paid players are seeded (best season points first, ties shuffled). If the number isn't a power of two,
@@ -60,7 +60,7 @@ Refresh the site: an **Admin** link appears.
    "Mark live" shows a match as in progress on the public bracket.
 6. **Finish event & award points.** Places 1-4 get 100/60/35/25 points, earlier exits 15/8/4 - the Society rankings on the home page update.
 
-Prizes are fixed dollar amounts you set per event for 1st, 2nd and 3rd place (they're shown on the event page and cards).
+We do not award cash prizes. Each event page just says that prizes are announced by the organizer.
 
 ## 5. Put it online on lebanonbackgammonsociety.com
 

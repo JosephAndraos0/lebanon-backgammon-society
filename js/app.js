@@ -254,7 +254,7 @@
         '<div class="fill-text">' + ev.taken + " / " + ev.max_players + " seats filled</div></div>" +
       '<div class="card-foot">' +
         '<div class="fee">' + esc(money(ev.entry_fee, ev.currency)) + '<span> entry</span></div>' +
-        '<div style="text-align:right;"><div class="fee">' + (totalPrizes(ev) > 0 ? esc(money(totalPrizes(ev), ev.currency)) : "—") + '</div><div class="fee-sub">in prizes</div></div>' +
+        '<div style="text-align:right;"><div class="fee">Prizes</div><div class="fee-sub">announced by the organizer</div></div>' +
       "</div></div>";
   }
   document.addEventListener("keydown", function (e) {
@@ -409,12 +409,6 @@
     if (state.autoEnroll === slug) { state.autoEnroll = null; startEnroll(ev); }
   }
 
-  function prizesOf(ev) {
-    var p = ev.prizes || [];
-    return [Number(p[0]) || 0, Number(p[1]) || 0, Number(p[2]) || 0];
-  }
-  function totalPrizes(ev) { return prizesOf(ev).reduce(function (a, b) { return a + b; }, 0); }
-
   function drawEvent() {
     var ev = current.event, detail = current.detail;
     $("edBadgeSlot").innerHTML = statusBadge(ev.status);
@@ -422,7 +416,7 @@
     $("edVenue").textContent = ev.venue || "To be announced";
     $("edDate").textContent = fmtDate(ev.starts_at);
     $("edFee").textContent = money(ev.entry_fee, ev.currency);
-    $("edPool").textContent = totalPrizes(ev) > 0 ? money(totalPrizes(ev), ev.currency) : "—";
+    $("edPool").textContent = "To be announced";
     $("edPlayers").textContent = ev.taken + " / " + ev.max_players;
     document.title = ev.name + " · Lebanon Backgammon Society";
 
@@ -537,15 +531,14 @@
       return;
     }
     if (state.tab === "prizes") {
-      var prizes = prizesOf(ev);
       var place = function (n) { return d.players.filter(function (p) { return p.final_place === n; })[0]; };
       panel.innerHTML = '<div class="prize-grid">' + [0, 1, 2].map(function (i) {
         var p = place(i + 1);
         return '<div class="prize-card ' + (i === 0 ? "gold" : "") + '"' + (p ? playerAttrs(p.name, p.avatar_url, p.profession) : "") + '>' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(["#C6A15B", "#C9BBA3", "#B08A56"][i])) +
-          '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="amt">' + esc(money(prizes[i], ev.currency)) + '</div><div class="who">' +
+          '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="who">' +
           (p ? esc(p.name) : "Up for grabs") + "</div></div>";
       }).join("") + "</div>" +
-      '<p class="fineprint">Prizes are awarded to the top three finishers of this tournament.</p>';
+      '<p class="fineprint">Prizes for this tournament will be announced by the organizer.</p>';
       return;
     }
     if (state.tab === "players") {
@@ -1343,8 +1336,7 @@
     return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function openEventForm(ev) {
-    var v = ev || { name: "", slug: "", venue: "", starts_at: new Date(Date.now() + 14 * 864e5).toISOString(), entry_fee: 25, max_players: 16, description: "", status: "draft", prizes: [200, 120, 80], image_url: null };
-    var pz = prizesOf(v);
+    var v = ev || { name: "", slug: "", venue: "", starts_at: new Date(Date.now() + 14 * 864e5).toISOString(), entry_fee: 25, max_players: 16, description: "", status: "draft", image_url: null };
     var ef = { blob: null, preview: null, imageUrl: v.image_url || null };
     openModal('<div class="modal-head"><h3>' + (ev ? "Edit tournament" : "New tournament") + '</h3><button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button></div>' +
       '<form id="eventForm" novalidate>' +
@@ -1361,7 +1353,6 @@
       '<div class="field"><label for="fStatus">Status</label><select id="fStatus">' + ["draft", "open", "live", "completed", "cancelled"].map(function (s) { return '<option value="' + s + '"' + (s === v.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></div>" +
       '<div class="field-row"><div class="field"><label for="fFee">Entry fee (USD)</label><input id="fFee" type="number" inputmode="decimal" min="0" step="0.5" value="' + esc(v.entry_fee) + '"></div>' +
       '<div class="field"><label for="fMax">Max players</label><input id="fMax" type="number" inputmode="numeric" min="2" max="128" value="' + esc(v.max_players) + '"></div></div>' +
-      '<div class="field"><label>Prizes in USD (1st / 2nd / 3rd place)</label><div class="field-row"><input id="fP1" type="number" inputmode="numeric" min="0" step="1" aria-label="1st place prize" value="' + pz[0] + '"><input id="fP2" type="number" inputmode="numeric" min="0" step="1" aria-label="2nd place prize" value="' + pz[1] + '"><input id="fP3" type="number" inputmode="numeric" min="0" step="1" aria-label="3rd place prize" value="' + pz[2] + '"></div><small>Fixed amounts paid to the top three finishers.</small></div>' +
       '<div class="field"><label for="fDesc">Description</label><textarea id="fDesc" rows="3">' + esc(v.description) + "</textarea></div>" +
       '<p class="form-error" id="fError" hidden></p>' +
       '<div class="sheet-actions"><button type="submit" class="btn btn-brass btn-block">' + (ev ? "Save changes" : "Create tournament") + "</button></div></form>", { sticky: true });
@@ -1394,13 +1385,12 @@
       e.preventDefault();
       var err = $("fError"); err.hidden = true;
       if (ef.processing) await ef.processing;
-      var p = [+$("fP1").value, +$("fP2").value, +$("fP3").value];
       var obj = { name: $("fName").value.trim(), slug: slugify($("fSlug").value || $("fName").value), venue: $("fVenue").value.trim(),
         starts_at: $("fStart").value ? new Date($("fStart").value).toISOString() : null, status: $("fStatus").value,
-        entry_fee: +$("fFee").value, max_players: parseInt($("fMax").value, 10), description: $("fDesc").value.trim(), prizes: p };
+        entry_fee: +$("fFee").value, max_players: parseInt($("fMax").value, 10), description: $("fDesc").value.trim() };
       var problem = !obj.name ? "Give the tournament a name." : !obj.slug ? "Give the tournament a web address." : !obj.starts_at ? "Pick a start date and time."
         : !(obj.entry_fee >= 0) ? "Entry fee must be 0 or more." : !(obj.max_players >= 2 && obj.max_players <= 128) ? "Max players must be between 2 and 128."
-        : !(p[0] >= 0 && p[1] >= 0 && p[2] >= 0) ? "Prizes must be 0 or more." : "";
+        : "";
       if (problem) { err.textContent = problem; err.hidden = false; return; }
       if (!ef.blob && ef.imageUrl !== (v.image_url || null)) obj.image_url = ef.imageUrl;   // removed, no replacement picked
       try {
