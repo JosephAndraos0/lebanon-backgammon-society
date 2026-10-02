@@ -253,7 +253,7 @@
       '<div><div class="fill-bar"><i style="width:' + pct + '%"></i></div>' +
         '<div class="fill-text">' + ev.taken + " / " + ev.max_players + " seats filled</div></div>" +
       '<div class="card-foot">' +
-        '<div class="fee">' + esc(money(ev.entry_fee, ev.currency)) + '<span> entry</span></div>' +
+        '<div class="fee">' + (Number(ev.entry_fee) > 0 ? esc(money(ev.entry_fee, ev.currency)) + '<span> entry</span>' : 'Free<span> entry</span>') + '</div>' +
       "</div></div>";
   }
   document.addEventListener("keydown", function (e) {
@@ -414,7 +414,7 @@
     $("edTitle").textContent = ev.name;
     $("edVenue").textContent = ev.venue || "To be announced";
     $("edDate").textContent = fmtDate(ev.starts_at);
-    $("edFee").textContent = money(ev.entry_fee, ev.currency);
+    $("edFee").textContent = Number(ev.entry_fee) > 0 ? money(ev.entry_fee, ev.currency) : "Free";
     $("edPlayers").textContent = ev.taken + " / " + ev.max_players;
     document.title = ev.name + " · Lebanon Backgammon Society";
 
@@ -1349,6 +1349,7 @@
       '<div class="field"><label for="fVenue">Venue</label><input id="fVenue" value="' + esc(v.venue) + '" placeholder="Backroom Lounge, Hamra"></div>' +
       '<div class="field-row"><div class="field"><label for="fStart">Start (your local time)</label><input id="fStart" type="datetime-local" value="' + esc(toLocalInput(v.starts_at)) + '"></div>' +
       '<div class="field"><label for="fStatus">Status</label><select id="fStatus">' + ["draft", "open", "live", "completed", "cancelled"].map(function (s) { return '<option value="' + s + '"' + (s === v.status ? " selected" : "") + ">" + s + "</option>"; }).join("") + "</select></div></div>" +
+      '<label class="check-row"><input type="checkbox" id="fFree"' + (ev && Number(v.entry_fee) === 0 ? " checked" : "") + '><span class="check-box" aria-hidden="true"></span><span class="check-text"><b>Free tournament</b><small>No entry fee. Players just tap Join, no payment.</small></span></label>' +
       '<div class="field-row"><div class="field"><label for="fFee">Entry fee (USD)</label><input id="fFee" type="number" inputmode="decimal" min="0" step="0.5" value="' + esc(v.entry_fee) + '"></div>' +
       '<div class="field"><label for="fMax">Max players</label><input id="fMax" type="number" inputmode="numeric" min="2" max="128" value="' + esc(v.max_players) + '"></div></div>' +
       '<div class="field"><label for="fDesc">Description</label><textarea id="fDesc" rows="3">' + esc(v.description) + "</textarea></div>" +
@@ -1379,13 +1380,16 @@
       ef.blob = null; ef.preview = null; ef.imageUrl = null; ef.processing = null; paintEventPhoto();
     };
 
+    var syncFree = function () { $("fFee").disabled = $("fFree").checked; if ($("fFree").checked) $("fFee").value = "0"; };
+    $("fFree").onchange = syncFree; syncFree();
+
     $("eventForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       var err = $("fError"); err.hidden = true;
       if (ef.processing) await ef.processing;
       var obj = { name: $("fName").value.trim(), slug: slugify($("fSlug").value || $("fName").value), venue: $("fVenue").value.trim(),
         starts_at: $("fStart").value ? new Date($("fStart").value).toISOString() : null, status: $("fStatus").value,
-        entry_fee: +$("fFee").value, max_players: parseInt($("fMax").value, 10), description: $("fDesc").value.trim() };
+        entry_fee: $("fFree").checked ? 0 : +$("fFee").value, max_players: parseInt($("fMax").value, 10), description: $("fDesc").value.trim() };
       var problem = !obj.name ? "Give the tournament a name." : !obj.slug ? "Give the tournament a web address." : !obj.starts_at ? "Pick a start date and time."
         : !(obj.entry_fee >= 0) ? "Entry fee must be 0 or more." : !(obj.max_players >= 2 && obj.max_players <= 128) ? "Max players must be between 2 and 128."
         : "";
