@@ -1496,7 +1496,7 @@
         '<div class="ar-status">' + pill + "</div>" +
         '<div class="ar-actions">' +
         (isPaid ? '<button class="btn btn-ghost btn-sm" data-enr="' + esc(e.id) + '" data-to="pending_payment">Mark unpaid</button>'
-          : '<button class="btn btn-brass btn-sm" data-enr="' + esc(e.id) + '" data-to="paid"' + (e.order_id ? ' data-order="' + esc(e.order_id) + '" data-seats="' + (ord ? ord.seats : 1) + '"' : "") + ">Mark paid</button>") +
+          : '<button class="btn btn-brass btn-sm" data-enr="' + esc(e.id) + '" data-to="paid"' + (e.order_id && !(ord && ord.status === "paid") ? ' data-order="' + esc(e.order_id) + '" data-seats="' + (ord ? ord.seats : 1) + '"' : "") + ">Mark paid</button>") +
         ' <button class="btn btn-ghost btn-sm danger" data-enr="' + esc(e.id) + '" data-to="cancelled">Remove</button></div></div>';
     }).join("");
 
