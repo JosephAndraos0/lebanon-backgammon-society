@@ -294,7 +294,7 @@
       pill.onclick = function () { go("event/" + live[0].slug); };
     } else { pill.style.display = "none"; }
 
-    var list = live.concat(open).slice(0, 6);
+    var list = live.concat(open);
     $("homeEventsGrid").innerHTML = list.length ? list.map(eventCard).join("")
       : emptyState("No tournaments yet", "New tournaments are announced here. Check back soon.");
 
