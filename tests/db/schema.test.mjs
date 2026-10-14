@@ -33,6 +33,7 @@ if (mode === 'migrate') {
   await db.exec(fs.readFileSync(root + 'migrations/005_rankings_photo.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/006_profession.sql', 'utf8'));
   await db.exec(fs.readFileSync(root + 'migrations/007_zero_prizes.sql', 'utf8'));
+  await db.exec(fs.readFileSync(root + 'migrations/008_event_announcements.sql', 'utf8'));
 } else {
   await db.exec(fs.readFileSync(root + 'schema.sql', 'utf8'));
 }

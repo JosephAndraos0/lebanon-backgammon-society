@@ -1477,6 +1477,7 @@
       actions += '<button class="btn btn-brass btn-sm" data-act="finish"' + (standings ? "" : " disabled") + ">Finish event &amp; award points</button>";
       actions += '<button class="btn btn-ghost btn-sm" data-act="reset">Reset bracket</button>';
     }
+    if (ev.status === "open") actions += '<button class="btn btn-ghost btn-sm" data-act="announce">Email players</button>';
     actions += '<button class="btn btn-ghost btn-sm" data-act="edit">Edit details</button>';
     actions += '<button class="btn btn-ghost btn-sm danger" data-act="delete">Delete</button>';
 
@@ -1555,6 +1556,18 @@
     if (act) {
       var a = act.getAttribute("data-act");
       if (a === "edit") return openEventForm(ev);
+      if (a === "announce") {
+        act.disabled = true;
+        return API.announceEvent(ev.id, true).then(function (pre) {
+          if (!pre.recipients) { toast("Nobody to email yet: every opted-in player already has a seat."); return; }
+          var msg = "Email " + plural(pre.recipients, "player") + " about " + ev.name + "?\n\nOnly players who chose to hear about tournaments, and who don't already have a seat, will get it." +
+            (pre.last_sent ? "\n\nHeads up: players were already emailed about this tournament on " + fmtDate(pre.last_sent) + "." : "");
+          if (!confirm(msg)) return;
+          return API.announceEvent(ev.id, false).then(function (r) {
+            toast("Sent to " + plural(r.sent || 0, "player") + (r.failed ? " (" + r.failed + " failed)" : "") + ".");
+          });
+        }).catch(function (x) { toast(errMsg(x)); }).then(function () { act.disabled = false; });
+      }
       if (a === "open") return adminDo(function () { return API.adminSetEventStatus(ev.id, "open"); }, "Event is now open for entry.");
       if (a === "draft") return adminDo(function () { return API.adminSetEventStatus(ev.id, "draft"); }, "Moved back to draft.");
       if (a === "generate") {

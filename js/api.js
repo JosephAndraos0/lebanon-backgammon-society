@@ -219,6 +219,13 @@
       if (res.error) await fnError(res);
       return res.data || {};
     },
+    // Admin: email opted-in players about an open tournament. dryRun only counts the recipients.
+    announceEvent: async function (eventId, dryRun) {
+      needLive();
+      var res = await sb.functions.invoke("send-announcement", { body: { event_id: eventId, dry_run: !!dryRun } });
+      if (res.error) await fnError(res);
+      return res.data || {};
+    },
     getInvite: async function (token) {
       needLive();
       var rows = unwrap(await sb.rpc("get_invite", { p_token: token }));

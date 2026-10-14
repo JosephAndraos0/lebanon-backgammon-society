@@ -371,6 +371,21 @@
               });
               save(); return res({ data: { sent: sent, failed: 0 }, error: null });
             }
+            if (name === "send-announcement") {
+              if (!isAdmin()) return res(fail("Only the organizer can do this."));
+              var aev = db.events.filter(function (x) { return x.id === b.event_id; })[0];
+              if (!aev) return res(fail("Tournament not found."));
+              if (aev.status !== "open") return res(fail("Only tournaments that are open for entry can be announced."));
+              var inIt = {};
+              db.enrollments.forEach(function (e) { if (e.event_id === aev.id && e.status === "paid") inIt[e.user_id] = true; });
+              var targets = db.profiles.filter(function (p) { return p.marketing_opt_in === true && p.email && !inIt[p.id]; });
+              db.announcements = db.announcements || [];
+              var lastA = db.announcements.filter(function (x) { return x.event_id === aev.id; }).pop();
+              if (b.dry_run) return res({ data: { recipients: targets.length, last_sent: lastA ? lastA.created_at : null }, error: null });
+              targets.forEach(function (p) { emails.push({ to: p.email, kind: "announcement", event: aev.slug }); });
+              db.announcements.push({ event_id: aev.id, created_at: iso(Date.now()), recipients: targets.length });
+              save(); return res({ data: { sent: targets.length, failed: 0 }, error: null });
+            }
             res(fail("unknown function"));
           }, cfg.latency);
         });
