@@ -539,17 +539,6 @@
         }).join("") : '<p class="muted-cell">Nobody yet.</p>') + "</div></div>";
       return;
     }
-    if (state.tab === "prizes") {
-      var place = function (n) { return d.players.filter(function (p) { return p.final_place === n; })[0]; };
-      panel.innerHTML = '<div class="prize-grid">' + [0, 1, 2].map(function (i) {
-        var p = place(i + 1);
-        return '<div class="prize-card ' + (i === 0 ? "gold" : "") + '"' + (p ? playerAttrs(p.name, p.avatar_url, p.profession) : "") + '>' + (p ? avatar(p.name, p.avatar_url, "avatar-lg") : trophySvg(["#C6A15B", "#C9BBA3", "#B08A56"][i])) +
-          '<div class="place">' + ["1st", "2nd", "3rd"][i] + ' place</div><div class="who">' +
-          (p ? esc(p.name) : "Up for grabs") + "</div></div>";
-      }).join("") + "</div>" +
-      "";
-      return;
-    }
     if (state.tab === "players") {
       // Only players with a confirmed (paid) seat are ever listed.
       panel.innerHTML = d.players.length ? '<div class="players-grid">' + d.players.slice().sort(function (a, b) { return (a.seed || 999) - (b.seed || 999); }).map(function (p, i) {
@@ -1523,7 +1512,7 @@
 
     var bracketHtmlAdmin = "";
     if (ms.length) {
-      bracketHtmlAdmin = '<h3 class="admin-h">Bracket &amp; results</h3><p class="fineprint">Matches are best of three — enter how many games each player won (first to 2 wins). Use "Mark live" to show a match as in progress on the public bracket.</p>' +
+      bracketHtmlAdmin = '<h3 class="admin-h">Bracket &amp; results</h3><p class="fineprint">Matches are first to 5 points — enter the points each player scored (the winner needs 5 or more, the loser 0 to 4). Use "Mark live" to show a match as in progress on the public bracket.</p>' +
         B.toRounds(ms).map(function (r) {
           return '<div class="round-block"><h4>' + esc(r.label) + '</h4><div class="match-admin-grid">' + r.matches.map(function (m) {
             var third = m.round === B.toRounds(ms).length && m.position === 2;
@@ -1532,8 +1521,8 @@
             var ready = m.player_a && m.player_b;
             return '<div class="match-admin ' + m.status + '" data-match="' + m.id + '">' +
               (third ? '<div class="ma-tag">Third place</div>' : "") +
-              '<div class="ma-row"><span class="ma-name">' + esc(a) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" max="2" data-side="a" aria-label="Games won by ' + esc(a) + '" value="' + (m.score_a == null ? "" : m.score_a) + '"' + (ready ? "" : " disabled") + "></div>" +
-              '<div class="ma-row"><span class="ma-name">' + esc(b) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" max="2" data-side="b" aria-label="Games won by ' + esc(b) + '" value="' + (m.score_b == null ? "" : m.score_b) + '"' + (ready ? "" : " disabled") + "></div>" +
+              '<div class="ma-row"><span class="ma-name">' + esc(a) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" data-side="a" aria-label="Points scored by ' + esc(a) + '" value="' + (m.score_a == null ? "" : m.score_a) + '"' + (ready ? "" : " disabled") + "></div>" +
+              '<div class="ma-row"><span class="ma-name">' + esc(b) + '</span><input class="ma-score" type="number" inputmode="numeric" min="0" data-side="b" aria-label="Points scored by ' + esc(b) + '" value="' + (m.score_b == null ? "" : m.score_b) + '"' + (ready ? "" : " disabled") + "></div>" +
               '<div class="ma-actions">' + (ready ? '<button class="btn btn-brass btn-sm" data-save="' + m.id + '">' + (m.status === "done" ? "Update result" : "Save result") + "</button>" +
                 (m.status !== "done" ? '<button class="btn btn-ghost btn-sm" data-live="' + m.id + '">' + (m.status === "live" ? "Unmark live" : "Mark live") + "</button>" : '<span class="pill pill-ok pill-sm">done</span>') : '<span class="cta-note">Waiting for earlier matches</span>') + "</div></div>";
           }).join("") + "</div></div>";
@@ -1624,10 +1613,11 @@
       var card = save.closest(".match-admin"), id = save.getAttribute("data-save");
       var m = adminCtx.matches.filter(function (x) { return x.id === id; })[0];
       var sa = card.querySelector('[data-side="a"]').value, sb = card.querySelector('[data-side="b"]').value;
-      if (sa === "" || sb === "") return toast("Enter how many games each player won.");
+      if (sa === "" || sb === "") return toast("Enter the points each player scored.");
       sa = parseInt(sa, 10); sb = parseInt(sb, 10);
-      var gamesProblem = sa === sb ? "Games can't be tied. Someone has to win."
-        : Math.max(sa, sb) !== 2 || Math.min(sa, sb) < 0 || Math.min(sa, sb) > 1 ? "Best of three: the winner needs 2 games, the loser 0 or 1."
+      var gamesProblem = isNaN(sa) || isNaN(sb) || sa < 0 || sb < 0 ? "Enter the points each player scored."
+        : sa === sb ? "Scores can't be tied. Someone has to reach 5."
+        : Math.max(sa, sb) < 5 || Math.min(sa, sb) > 4 ? "First to 5 points: the winner needs 5 or more, the loser 0 to 4."
         : "";
       if (gamesProblem) return toast(gamesProblem);
       return adminDo(function () {

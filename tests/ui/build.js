@@ -4,7 +4,8 @@
 const fs = require("fs"), path = require("path");
 const root = path.join(__dirname, "..", "..");
 const source = fs.readFileSync(path.join(root, "index.html"), "utf8");
-const relink = (h) => h.replace(/src="(js|img)\//g, 'src="../../$1/').replace(/href="styles\.css(\?[^"]*)?"/, 'href="../../styles.css"');
+const unlock = (h) => h.replace('<head>', '<head>\n<script>try{ if(location.search.indexOf("gate=1")<0) localStorage.setItem("lbs_unlocked","1"); else localStorage.removeItem("lbs_unlocked"); }catch(e){}</script>');
+const relink = (h) => unlock(h).replace(/src="(js|img)\//g, 'src="../../$1/').replace(/href="styles\.css(\?[^"]*)?"/, 'href="../../styles.css"');
 
 const fake = relink(source.replace(/<script src="https:\/\/cdn\.jsdelivr\.net[^>]*supabase[^>]*><\/script>/, '<script src="fake-supabase.js"></script>'));
 if (fake.indexOf("fake-supabase.js") === -1) throw new Error("could not swap the Supabase script tag");

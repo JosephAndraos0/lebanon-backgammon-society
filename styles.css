@@ -706,3 +706,9 @@ footer{ padding-bottom:calc(36px + env(safe-area-inset-bottom)); }
 .hero-grid > div{ max-width:640px; }
 /* the logo is a link home: give it a thumb-sized tap area */
 a.brand{ min-height:44px; }
+
+/* ---- pre-launch access gate ---- */
+.gate-card{ width:100%; max-width:380px; background:var(--surface); border:1px solid var(--line-strong); border-radius:16px; padding:28px 24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
+.gate-brand{ font-family:Impact,'Arial Narrow',Arial,sans-serif; font-size:22px; letter-spacing:1px; color:var(--cream); line-height:1.1; text-align:center; }
+.gate-note{ margin:12px 0 20px; font-size:14px; line-height:1.55; color:var(--cream-dim); text-align:center; }
+.gate-card .btn{ width:100%; }
